@@ -1,4 +1,11 @@
 import { generateSessionCode, getOrCreateAttendeeId } from '../lib/ids.js';
+import {
+  generate6DigitPin,
+  sortQueue,
+  recordSpeakHistoryEnd,
+  isFairModeActive,
+  VALID_REASONS
+} from './mockFloorManager.js';
 
 const HOST_STORAGE_KEY = 'eventmic_host_session';
 const DEFAULT_CHANNEL = 'eventmic';
@@ -11,7 +18,7 @@ export class MockTransport {
   constructor(options = {}) {
     this.channelName = options.channelName || DEFAULT_CHANNEL;
     this.channel = null;
-    this.role = null; // 'host' | 'attendee'
+    this.role = null; // 'admin' | 'principal' | 'attendee' | 'host'
     this.code = null;
     this.name = null;
     this.myId = options.id || getOrCreateAttendeeId();
@@ -28,23 +35,24 @@ export class MockTransport {
     this.isMuted = false;
     this.selfState = 'listening';
 
-    // Host-specific state
+    // Part A state
+    this.principals = new Map(); // id -> { id, name, pin, createdAt }
+    this.principalQueue = []; // [{ id, name, requestedAt }]
+    this.floorAllow = null; // { principalId, expiresAt }
+    this.speakHistory = new Map(); // id -> { id, name, count, totalSeconds, lastSpokeAt, history: [] }
+    this.settings = { fairMode: 'off', fairFromMinutesBeforeEnd: 15, sessionEndsAt: null };
+
+    // Host/Admin-specific state
     this.attendees = new Map(); // id -> { id, name, lastSeen }
     this.heartbeatTimer = null;
     this.cleanerTimer = null;
 
-    // Attendee-specific state
+    // Attendee/Principal watcher state
     this.lastHostSeen = 0;
     this.hostWatchTimer = null;
     this.attendeeHeartbeatTimer = null;
   }
 
-  /**
-   * Subscribe to transport event. Returns an unsubscribe function.
-   * @param {string} event 
-   * @param {Function} handler 
-   * @returns {() => void}
-   */
   on(event, handler) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
@@ -52,15 +60,10 @@ export class MockTransport {
     this.listeners.get(event).add(handler);
     return () => {
       const set = this.listeners.get(event);
-      if (set) {
-        set.delete(handler);
-      }
+      if (set) set.delete(handler);
     };
   }
 
-  /**
-   * Internal emitter to notify subscribers.
-   */
   emit(event, data) {
     const set = this.listeners.get(event);
     if (set) {
@@ -81,9 +84,6 @@ export class MockTransport {
     }
   }
 
-  /**
-   * Helper to execute function with artificial network delay (50-150ms).
-   */
   delayedDispatch(fn, customDelay) {
     let delay = customDelay;
     if (this.broadcastDelay !== null) {
@@ -94,9 +94,6 @@ export class MockTransport {
     setTimeout(fn, delay);
   }
 
-  /**
-   * Initializes BroadcastChannel.
-   */
   ensureChannel() {
     if (!this.channel) {
       this.channel = new BroadcastChannel(this.channelName);
@@ -104,13 +101,8 @@ export class MockTransport {
     }
   }
 
-  /**
-   * Host only: creates a new session.
-   * @param {{ name: string }} params 
-   * @returns {Promise<import('./types.js').SessionInfo>}
-   */
   async createSession({ name }) {
-    this.role = 'host';
+    this.role = 'admin';
     this.ensureChannel();
 
     const code = generateSessionCode();
@@ -125,6 +117,11 @@ export class MockTransport {
     this.code = code;
     this.queue = [];
     this.floor = null;
+    this.principals.clear();
+    this.principalQueue = [];
+    this.floorAllow = null;
+    this.speakHistory.clear();
+    this.settings = { fairMode: 'off', fairFromMinutesBeforeEnd: 15, sessionEndsAt: null };
     this.attendees.clear();
     this.isMuted = false;
 
@@ -136,14 +133,13 @@ export class MockTransport {
     this.emit('session', session);
     this.emit('queue', this.queue);
     this.emit('floor', this.floor);
+    this.emit('principals', []);
+    this.emit('principalQueue', []);
     this.emit('attendees', { count: 0 });
 
     return session;
   }
 
-  /**
-   * Host only: restores a previously saved host session if valid.
-   */
   restoreHostSession() {
     try {
       const saved = localStorage.getItem(HOST_STORAGE_KEY);
@@ -156,28 +152,28 @@ export class MockTransport {
     return null;
   }
 
-  /**
-   * Connect to an existing session as host or attendee.
-   * @param {{ role: 'host' | 'attendee', code: string, name?: string }} params 
-   */
-  async connect({ role, code, name }) {
-    this.role = role;
+  async connect({ role, code, name, pin, passcode }) {
+    let normalizedRole = role === 'host' ? 'admin' : role;
+    this.role = normalizedRole;
     this.code = code ? code.trim().toUpperCase() : '';
     this.name = name ? name.trim() : '';
     this.ensureChannel();
-
     this.setConnectionState('connecting');
 
-    if (role === 'host') {
+    if (this.role === 'admin') {
       const saved = this.restoreHostSession();
       if (saved && saved.session.code === this.code) {
         this.session = saved.session;
         this.queue = saved.queue || [];
         this.floor = saved.floor || null;
+        if (Array.isArray(saved.principals)) {
+          this.principals = new Map(saved.principals.map(p => [p.id, p]));
+        }
+        if (saved.settings) this.settings = saved.settings;
       } else {
         this.session = {
           code: this.code,
-          name: this.name || 'Live Q&A Session',
+          name: this.name || 'Live Event',
           status: 'live',
           createdAt: Date.now()
         };
@@ -189,13 +185,34 @@ export class MockTransport {
       this.startHostTimers();
       this.broadcastState();
       this.emit('session', this.session);
-      this.emit('queue', this.queue);
+      this.emit('queue', sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings)));
       this.emit('floor', this.floor);
+      this.emit('principals', Array.from(this.principals.values()));
+      this.emit('principalQueue', this.principalQueue);
       this.emit('attendees', { count: this.attendees.size });
       return;
     }
 
-    // Attendee connection: send hello to host and await validation
+    if (this.role === 'principal') {
+      if (!this.myId || !this.myId.startsWith('prin-')) {
+        this.myId = 'prin-' + Math.random().toString(36).substring(2, 9);
+      }
+      this.lastHostSeen = Date.now();
+      this.startAttendeeWatchers();
+
+      this.delayedDispatch(() => {
+        this.postToChannel({
+          type: 'principal_hello',
+          code: this.code,
+          id: this.myId,
+          name: this.name,
+          pin
+        });
+      }, 50);
+      return;
+    }
+
+    // Attendee connection
     this.lastHostSeen = Date.now();
     this.startAttendeeWatchers();
 
@@ -209,16 +226,13 @@ export class MockTransport {
     }, 50);
   }
 
-  /**
-   * Disconnects current transport.
-   */
   async disconnect() {
-    if (this.role === 'attendee' && this.code) {
-      this.postToChannel({
-        type: 'attendee_bye',
-        code: this.code,
-        id: this.myId
-      });
+    if (this.code) {
+      if (this.role === 'attendee') {
+        this.postToChannel({ type: 'attendee_bye', code: this.code, id: this.myId });
+      } else if (this.role === 'principal') {
+        this.postToChannel({ type: 'principal_bye', code: this.code, id: this.myId });
+      }
     }
 
     this.stopTimers();
@@ -230,11 +244,8 @@ export class MockTransport {
     this.setConnectionState('disconnected');
   }
 
-  /**
-   * Host only: ends the current session.
-   */
   async endSession() {
-    if (this.role !== 'host' || !this.session) return;
+    if ((this.role !== 'admin' && this.role !== 'host') || !this.session) return;
 
     this.session.status = 'ended';
     this.floor = null;
@@ -253,22 +264,18 @@ export class MockTransport {
     this.stopTimers();
   }
 
-  /**
-   * Attendee only: raises hand.
-   */
-  async raiseHand() {
+  async raiseHand(options = {}) {
     if (this.role !== 'attendee' || !this.code) return;
+    const reason = options.reason || 'question';
     this.postToChannel({
       type: 'attendee_raise',
       code: this.code,
       id: this.myId,
-      name: this.name
+      name: this.name,
+      reason
     });
   }
 
-  /**
-   * Attendee only: lowers hand or stops speaking.
-   */
   async lowerHand() {
     if (this.role !== 'attendee' || !this.code) return;
     this.postToChannel({
@@ -278,15 +285,235 @@ export class MockTransport {
     });
   }
 
-  /**
-   * Host only: grants floor to attendeeId (revokes current speaker first).
-   * @param {string} attendeeId 
-   */
-  async grant(attendeeId) {
-    if (this.role !== 'host') return;
-    if (!attendeeId) return;
+  async takeFloor() {
+    if (this.role !== 'admin' && this.role !== 'host' && this.role !== 'principal') {
+      throw new Error('Only admin or principal can take floor');
+    }
 
-    // Find attendee in queue
+    if (this.isAdmin) {
+      this._executeTakeFloor('admin', this.myId, this.name || 'Admin');
+    } else {
+      this.postToChannel({
+        type: 'take_floor',
+        code: this.code,
+        callerRole: this.role,
+        callerId: this.myId,
+        callerName: this.name || 'Speaker'
+      });
+    }
+  }
+
+  async requestSpeak() {
+    if (this.role !== 'principal' || !this.code) return;
+    this.postToChannel({
+      type: 'request_speak',
+      code: this.code,
+      callerId: this.myId,
+      callerName: this.name || 'Speaker'
+    });
+  }
+
+  async allowPrincipal(principalId) {
+    if (this.isAdmin) {
+      this._executeAllowPrincipal(principalId);
+    } else {
+      this.postToChannel({
+        type: 'allow_principal',
+        code: this.code,
+        callerId: this.myId,
+        callerRole: this.role,
+        targetPrincipalId: principalId
+      });
+    }
+  }
+
+  async grant(attendeeId) {
+    if (!attendeeId) return;
+    if (this.isAdmin) {
+      this._executeGrant(attendeeId, this.role, this.myId);
+    } else {
+      this.postToChannel({
+        type: 'grant_floor',
+        code: this.code,
+        callerId: this.myId,
+        callerRole: this.role,
+        attendeeId
+      });
+    }
+  }
+
+  async revoke(attendeeId) {
+    if (this.isAdmin) {
+      this._executeRevoke(attendeeId);
+    } else {
+      this.postToChannel({
+        type: 'revoke_floor',
+        code: this.code,
+        callerId: this.myId,
+        callerRole: this.role,
+        attendeeId
+      });
+    }
+  }
+
+  async muteSpeaker(muted) {
+    this.isMuted = !!muted;
+    this.postToChannel({
+      type: 'speaker_muted',
+      code: this.code,
+      muted: this.isMuted
+    });
+  }
+
+  async sendLevel(level) {
+    if (!this.code) return;
+    const clamped = Math.min(1, Math.max(0, level));
+    this.postToChannel({
+      type: 'attendee_level',
+      code: this.code,
+      id: this.myId,
+      level: clamped
+    });
+  }
+
+  async createPrincipal(name) {
+    const pin = generate6DigitPin();
+    const id = 'prin-' + Math.random().toString(36).substring(2, 9);
+    const principal = { id, name: name.trim(), pin, createdAt: Date.now() };
+
+    this.principals.set(id, principal);
+    this.saveHostSession();
+    this.broadcastState();
+    this.emit('principals', Array.from(this.principals.values()));
+    return principal;
+  }
+
+  async getPrincipals() {
+    return Array.from(this.principals.values());
+  }
+
+  async revokePrincipal(id) {
+    this.principals.delete(id);
+    this.saveHostSession();
+    this.broadcastState();
+    this.emit('principals', Array.from(this.principals.values()));
+  }
+
+  async regeneratePrincipalPin(id) {
+    const p = this.principals.get(id);
+    if (!p) throw new Error('Principal not found');
+    p.pin = generate6DigitPin();
+    this.saveHostSession();
+    this.broadcastState();
+    this.emit('principals', Array.from(this.principals.values()));
+    return p.pin;
+  }
+
+  async updateSettings(newSettings) {
+    this.settings = { ...this.settings, ...newSettings };
+    this.saveHostSession();
+    this.broadcastState();
+    const sorted = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
+    this.emit('queue', sorted);
+    this.emit('fairMode', isFairModeActive(this.settings));
+  }
+
+  async fetchSessionState() {
+    const sortedQueue = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
+    const allAttendees = Array.from(this.attendees.values()).map(a => {
+      const hist = this.speakHistory.get(a.id);
+      let state = 'listening';
+      if (this.floor?.id === a.id) state = 'speaking';
+      else if (this.queue.some(q => q.id === a.id)) state = 'hand_raised';
+      return {
+        id: a.id,
+        name: a.name,
+        state,
+        timesSpoken: hist?.count || 0,
+        lastSpokeAt: hist?.lastSpokeAt || null
+      };
+    });
+
+    const spokeHistory = Array.from(this.speakHistory.values()).flatMap(s =>
+      (s.history || []).map(h => ({
+        id: s.id,
+        name: s.name,
+        startedAt: h.startedAt,
+        durationSeconds: h.durationSeconds,
+        reason: h.reason
+      }))
+    ).sort((a, b) => b.startedAt - a.startedAt);
+
+    return {
+      code: this.code,
+      name: this.session?.name,
+      status: this.session?.status,
+      floor: this.floor,
+      principalQueue: this.principalQueue || [],
+      queue: sortedQueue,
+      allAttendees,
+      spokeHistory,
+      principals: Array.from(this.principals.values()),
+      settings: this.settings,
+      fairModeActive: isFairModeActive(this.settings),
+      floorAllow: this.floorAllow
+    };
+  }
+
+  get isAdmin() {
+    return this.role === 'admin' || this.role === 'host';
+  }
+
+  // -------------------------------------------------------------
+  // Internal Floor Execution (Authoritative on Host/Admin)
+  // -------------------------------------------------------------
+
+  _executeTakeFloor(role, callerId, callerName) {
+    const current = this.floor;
+    if (current && current.id === callerId) return;
+
+    if (current) {
+      recordSpeakHistoryEnd(this.speakHistory, current.id, current.name, current.startedAt, current.reason);
+      if (current.role === 'attendee') {
+        this.postToChannel({
+          type: 'floor_preempted',
+          targetId: current.id,
+          reason: 'The speaker is taking the floor'
+        });
+      }
+    }
+
+    this.floor = {
+      id: callerId,
+      name: callerName,
+      role: role === 'admin' || role === 'host' ? 'admin' : 'principal',
+      startedAt: Date.now(),
+      mode: 'principal'
+    };
+
+    this.principalQueue = this.principalQueue.filter(p => p.id !== callerId);
+    this.saveHostSession();
+    this.broadcastState();
+    this.emit('floor', this.floor);
+    this.emit('principalQueue', this.principalQueue);
+  }
+
+  _executeAllowPrincipal(targetPrincipalId) {
+    this.floorAllow = {
+      principalId: targetPrincipalId,
+      expiresAt: Date.now() + 60000
+    };
+    this.principalQueue = this.principalQueue.filter(p => p.id !== targetPrincipalId);
+    this.saveHostSession();
+    this.broadcastState();
+    this.emit('principalQueue', this.principalQueue);
+  }
+
+  _executeGrant(attendeeId, callerRole, callerId) {
+    if (callerRole === 'principal' && this.floor?.id !== callerId) {
+      throw new Error('Only the current speaker holding the floor or admin may grant floor');
+    }
+
     const queuedIdx = this.queue.findIndex(item => item.id === attendeeId);
     let targetAttendee = null;
 
@@ -297,30 +524,32 @@ export class MockTransport {
       targetAttendee = this.attendees.get(attendeeId);
     }
 
-    if (!targetAttendee) return; // Granting nobody is a no-op
+    if (!targetAttendee) return;
 
-    // Enforce one speaker rule: revoke current speaker first
+    if (this.floor) {
+      recordSpeakHistoryEnd(this.speakHistory, this.floor.id, this.floor.name, this.floor.startedAt, this.floor.reason);
+    }
+
     this.floor = {
       id: targetAttendee.id,
       name: targetAttendee.name,
-      startedAt: Date.now()
+      role: 'attendee',
+      startedAt: Date.now(),
+      mode: 'attendee',
+      reason: targetAttendee.reason || 'question'
     };
 
     this.saveHostSession();
     this.broadcastState();
     this.emit('floor', this.floor);
-    this.emit('queue', [...this.queue]);
+    const sorted = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
+    this.emit('queue', sorted);
   }
 
-  /**
-   * Host only: revokes floor from attendee.
-   * @param {string} [attendeeId] 
-   */
-  async revoke(attendeeId) {
-    if (this.role !== 'host') return;
+  _executeRevoke(attendeeId) {
     if (!this.floor) return;
-
     if (!attendeeId || this.floor.id === attendeeId) {
+      recordSpeakHistoryEnd(this.speakHistory, this.floor.id, this.floor.name, this.floor.startedAt, this.floor.reason);
       this.floor = null;
       this.saveHostSession();
       this.broadcastState();
@@ -328,37 +557,8 @@ export class MockTransport {
     }
   }
 
-  /**
-   * Host only: mutes or unmutes speaker.
-   * @param {boolean} muted 
-   */
-  async muteSpeaker(muted) {
-    if (this.role !== 'host') return;
-    this.isMuted = !!muted;
-    this.postToChannel({
-      type: 'speaker_muted',
-      code: this.code,
-      muted: this.isMuted
-    });
-  }
-
-  /**
-   * Attendee only: sends real mic audio level (0..1) while on air.
-   * @param {number} level 
-   */
-  async sendLevel(level) {
-    if (this.role !== 'attendee' || !this.code) return;
-    const clamped = Math.min(1, Math.max(0, level));
-    this.postToChannel({
-      type: 'attendee_level',
-      code: this.code,
-      id: this.myId,
-      level: clamped
-    });
-  }
-
   // -------------------------------------------------------------
-  // Internal Messaging & State Management
+  // Channel Messaging
   // -------------------------------------------------------------
 
   postToChannel(msg) {
@@ -374,17 +574,16 @@ export class MockTransport {
   handleMessage(msg) {
     if (!msg || typeof msg !== 'object') return;
 
-    if (this.role === 'host') {
+    if (this.isAdmin) {
       this.handleHostMessage(msg);
-    } else if (this.role === 'attendee') {
-      this.handleAttendeeMessage(msg);
+    } else {
+      this.handleClientMessage(msg);
     }
   }
 
   handleHostMessage(msg) {
-    // Ignore messages for other session codes
     if (msg.code && this.session && msg.code !== this.session.code) {
-      if (msg.type === 'attendee_hello') {
+      if (msg.type === 'attendee_hello' || msg.type === 'principal_hello') {
         this.postToChannel({
           type: 'host_error',
           targetId: msg.id,
@@ -398,6 +597,35 @@ export class MockTransport {
     const now = Date.now();
 
     switch (msg.type) {
+      case 'principal_hello': {
+        const principal = Array.from(this.principals.values()).find(p => p.pin === msg.pin);
+        if (!principal) {
+          this.postToChannel({
+            type: 'host_error',
+            targetId: msg.id,
+            code: 'UNAUTHORIZED',
+            message: 'Invalid principal PIN'
+          });
+          return;
+        }
+
+        this.delayedDispatch(() => {
+          this.postToChannel({
+            type: 'host_sync_target',
+            targetId: msg.id,
+            session: this.session,
+            queue: sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings)),
+            floor: this.floor,
+            isMuted: this.isMuted,
+            principals: Array.from(this.principals.values()),
+            principalQueue: this.principalQueue,
+            settings: this.settings,
+            fairModeActive: isFairModeActive(this.settings)
+          });
+        });
+        break;
+      }
+
       case 'attendee_hello': {
         if (!this.session || this.session.status === 'ended') {
           this.postToChannel({
@@ -427,15 +655,18 @@ export class MockTransport {
 
         this.emit('attendees', { count: this.attendees.size });
 
-        // Immediate targeted sync
         this.delayedDispatch(() => {
           this.postToChannel({
             type: 'host_sync_target',
             targetId: msg.id,
             session: this.session,
-            queue: this.queue,
+            queue: sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings)),
             floor: this.floor,
-            isMuted: this.isMuted
+            isMuted: this.isMuted,
+            principals: Array.from(this.principals.values()),
+            principalQueue: this.principalQueue,
+            settings: this.settings,
+            fairModeActive: isFairModeActive(this.settings)
           });
         });
         break;
@@ -443,14 +674,22 @@ export class MockTransport {
 
       case 'attendee_heartbeat': {
         if (this.attendees.has(msg.id)) {
-          const item = this.attendees.get(msg.id);
-          item.lastSeen = now;
+          this.attendees.get(msg.id).lastSeen = now;
         }
         break;
       }
 
       case 'attendee_bye': {
         this.removeAttendee(msg.id);
+        break;
+      }
+
+      case 'principal_bye': {
+        this.principalQueue = this.principalQueue.filter(p => p.id !== msg.id);
+        if (this.floor && this.floor.id === msg.id) {
+          this._executeRevoke(msg.id);
+        }
+        this.broadcastState();
         break;
       }
 
@@ -463,13 +702,13 @@ export class MockTransport {
             this.queue.push({
               id: msg.id,
               name: msg.name || (this.attendees.get(msg.id)?.name || 'Attendee'),
+              reason: msg.reason || 'question',
               raisedAt: now
             });
-            // Sorted oldest first
-            this.queue.sort((a, b) => a.raisedAt - b.raisedAt);
             this.saveHostSession();
             this.broadcastState();
-            this.emit('queue', [...this.queue]);
+            const sorted = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
+            this.emit('queue', sorted);
           }
         }
         break;
@@ -481,6 +720,7 @@ export class MockTransport {
 
         let floorChanged = false;
         if (this.floor && this.floor.id === msg.id) {
+          recordSpeakHistoryEnd(this.speakHistory, this.floor.id, this.floor.name, this.floor.startedAt, this.floor.reason);
           this.floor = null;
           floorChanged = true;
         }
@@ -488,14 +728,70 @@ export class MockTransport {
         if (this.queue.length !== initialLen || floorChanged) {
           this.saveHostSession();
           this.broadcastState();
-          if (this.queue.length !== initialLen) this.emit('queue', [...this.queue]);
+          if (this.queue.length !== initialLen) {
+            const sorted = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
+            this.emit('queue', sorted);
+          }
           if (floorChanged) this.emit('floor', null);
         }
         break;
       }
 
+      case 'take_floor': {
+        if (msg.callerRole === 'principal') {
+          if (this.floor && this.floor.role === 'principal' && this.floor.id !== msg.callerId) {
+            const allowed = this.floorAllow && this.floorAllow.principalId === msg.callerId && Date.now() < this.floorAllow.expiresAt;
+            if (!allowed) {
+              this.postToChannel({
+                type: 'host_error',
+                targetId: msg.callerId,
+                code: 'FORBIDDEN',
+                message: 'Floor is held by another speaker. Request to speak instead.'
+              });
+              return;
+            }
+            this.floorAllow = null;
+          }
+        }
+        this._executeTakeFloor(msg.callerRole, msg.callerId, msg.callerName);
+        break;
+      }
+
+      case 'request_speak': {
+        if (!this.principalQueue.some(p => p.id === msg.callerId)) {
+          this.principalQueue.push({ id: msg.callerId, name: msg.callerName, requestedAt: now });
+          this.saveHostSession();
+          this.broadcastState();
+          this.emit('principalQueue', this.principalQueue);
+        }
+        break;
+      }
+
+      case 'allow_principal': {
+        this._executeAllowPrincipal(msg.targetPrincipalId);
+        break;
+      }
+
+      case 'grant_floor': {
+        try {
+          this._executeGrant(msg.attendeeId, msg.callerRole, msg.callerId);
+        } catch (err) {
+          this.postToChannel({
+            type: 'host_error',
+            targetId: msg.callerId,
+            code: 'FORBIDDEN',
+            message: err.message
+          });
+        }
+        break;
+      }
+
+      case 'revoke_floor': {
+        this._executeRevoke(msg.attendeeId);
+        break;
+      }
+
       case 'attendee_level': {
-        // Only accept audio level from current active speaker
         if (this.floor && this.floor.id === msg.id) {
           this.emit('level', this.isMuted ? 0 : msg.level);
         }
@@ -504,12 +800,21 @@ export class MockTransport {
     }
   }
 
-  handleAttendeeMessage(msg) {
+  handleClientMessage(msg) {
     switch (msg.type) {
       case 'host_error': {
         if (msg.targetId === this.myId) {
           this.emit('error', { code: msg.code, message: msg.message });
           this.setConnectionState('disconnected');
+        }
+        break;
+      }
+
+      case 'floor_preempted': {
+        if (msg.targetId === this.myId) {
+          this.emit('preempted', msg.reason || 'The speaker is taking the floor');
+          this.selfState = 'listening';
+          this.emit('self', 'listening');
         }
         break;
       }
@@ -522,9 +827,15 @@ export class MockTransport {
           this.queue = msg.queue || [];
           this.floor = msg.floor || null;
           this.isMuted = !!msg.isMuted;
+          this.principals = new Map((msg.principals || []).map(p => [p.id, p]));
+          this.principalQueue = msg.principalQueue || [];
+          this.settings = msg.settings || this.settings;
           this.emit('session', this.session);
           this.emit('queue', this.queue);
           this.emit('floor', this.floor);
+          this.emit('principals', Array.from(this.principals.values()));
+          this.emit('principalQueue', this.principalQueue);
+          this.emit('fairMode', !!msg.fairModeActive);
           this.updateSelfState();
         }
         break;
@@ -542,10 +853,22 @@ export class MockTransport {
           this.queue = msg.queue || [];
           this.floor = msg.floor || null;
           this.isMuted = !!msg.isMuted;
+          if (msg.principals) {
+            this.principals = new Map(msg.principals.map(p => [p.id, p]));
+          }
+          if (msg.principalQueue) {
+            this.principalQueue = msg.principalQueue;
+          }
+          if (msg.settings) {
+            this.settings = msg.settings;
+          }
 
           this.emit('session', this.session);
           this.emit('queue', this.queue);
           this.emit('floor', this.floor);
+          this.emit('principals', Array.from(this.principals.values()));
+          this.emit('principalQueue', this.principalQueue);
+          this.emit('fairMode', !!msg.fairModeActive);
           this.updateSelfState();
         }
         break;
@@ -589,6 +912,7 @@ export class MockTransport {
 
     let floorChanged = false;
     if (this.floor && this.floor.id === id) {
+      recordSpeakHistoryEnd(this.speakHistory, this.floor.id, this.floor.name, this.floor.startedAt, this.floor.reason);
       this.floor = null;
       floorChanged = true;
     }
@@ -596,20 +920,29 @@ export class MockTransport {
     if (this.queue.length !== qLen || floorChanged) {
       this.saveHostSession();
       this.broadcastState();
-      if (this.queue.length !== qLen) this.emit('queue', [...this.queue]);
+      if (this.queue.length !== qLen) {
+        const sorted = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
+        this.emit('queue', sorted);
+      }
       if (floorChanged) this.emit('floor', null);
     }
   }
 
   broadcastState() {
     this.delayedDispatch(() => {
+      const sortedQueue = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
       this.postToChannel({
         type: 'host_state',
         session: this.session,
-        queue: this.queue,
+        queue: sortedQueue,
         floor: this.floor,
         isMuted: this.isMuted,
-        attendeeCount: this.attendees.size
+        attendeeCount: this.attendees.size,
+        principals: Array.from(this.principals.values()),
+        principalQueue: this.principalQueue,
+        settings: this.settings,
+        fairModeActive: isFairModeActive(this.settings),
+        floorAllow: this.floorAllow
       });
     });
   }
@@ -617,19 +950,22 @@ export class MockTransport {
   startHostTimers() {
     this.stopTimers();
 
-    // Host heartbeat every 3 seconds
     this.heartbeatTimer = setInterval(() => {
+      const sortedQueue = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
       this.postToChannel({
         type: 'host_heartbeat',
         session: this.session,
-        queue: this.queue,
+        queue: sortedQueue,
         floor: this.floor,
         isMuted: this.isMuted,
-        attendeeCount: this.attendees.size
+        attendeeCount: this.attendees.size,
+        principals: Array.from(this.principals.values()),
+        principalQueue: this.principalQueue,
+        settings: this.settings,
+        fairModeActive: isFairModeActive(this.settings)
       });
     }, HEARTBEAT_INTERVAL_MS);
 
-    // Cleaner for dead attendees (missed 8s heartbeat)
     this.cleanerTimer = setInterval(() => {
       const now = Date.now();
       let changed = false;
@@ -638,9 +974,9 @@ export class MockTransport {
         if (now - item.lastSeen > HEARTBEAT_TIMEOUT_MS) {
           this.attendees.delete(id);
           changed = true;
-          // Also remove from queue or floor if needed
           this.queue = this.queue.filter(q => q.id !== id);
           if (this.floor && this.floor.id === id) {
+            recordSpeakHistoryEnd(this.speakHistory, this.floor.id, this.floor.name, this.floor.startedAt, this.floor.reason);
             this.floor = null;
           }
         }
@@ -650,7 +986,8 @@ export class MockTransport {
         this.saveHostSession();
         this.broadcastState();
         this.emit('attendees', { count: this.attendees.size });
-        this.emit('queue', [...this.queue]);
+        const sorted = sortQueue(this.queue, this.speakHistory, isFairModeActive(this.settings));
+        this.emit('queue', sorted);
         this.emit('floor', this.floor);
       }
     }, 2000);
@@ -659,7 +996,6 @@ export class MockTransport {
   startAttendeeWatchers() {
     this.stopTimers();
 
-    // Attendee sends heartbeat every 3 seconds
     this.attendeeHeartbeatTimer = setInterval(() => {
       this.postToChannel({
         type: 'attendee_heartbeat',
@@ -668,10 +1004,8 @@ export class MockTransport {
       });
     }, HEARTBEAT_INTERVAL_MS);
 
-    // Attendee watches for missing host heartbeat
     this.hostWatchTimer = setInterval(() => {
       const elapsed = Date.now() - this.lastHostSeen;
-
       if (elapsed > DISCONNECT_TIMEOUT_MS) {
         this.setConnectionState('disconnected');
       } else if (elapsed > HEARTBEAT_TIMEOUT_MS) {
@@ -700,7 +1034,9 @@ export class MockTransport {
         JSON.stringify({
           session: this.session,
           queue: this.queue,
-          floor: this.floor
+          floor: this.floor,
+          principals: Array.from(this.principals.values()),
+          settings: this.settings
         })
       );
     } catch {}

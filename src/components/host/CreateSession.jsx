@@ -56,7 +56,7 @@ export function CreateSession({ onStartSession, onResumeSession }) {
         </div>
 
         <h1 className="text-2xl font-black text-center text-white uppercase tracking-wider mb-2">
-          Host Control Center
+          Admin Control Center
         </h1>
         <p className="text-sm text-center text-muted mb-8">
           Launch a live Q&amp;A microphone room for your audience.

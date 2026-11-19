@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mic, X } from 'lucide-react';
 import { formatWait } from '../../lib/time.js';
 import { Button } from '../ui/Button.jsx';
+import { ReasonBadge } from '../admin/ReasonBadge.jsx';
 
 export function QueueItem({
   item,
@@ -12,7 +13,6 @@ export function QueueItem({
   const [waitText, setWaitText] = useState(() => formatWait(item.raisedAt));
   const isFirst = index === 0;
 
-  // Live updating wait timer every second
   useEffect(() => {
     const update = () => setWaitText(formatWait(item.raisedAt));
     update();
@@ -28,37 +28,43 @@ export function QueueItem({
           : 'bg-surface/70 border-border hover:border-border/80'
       }`}
     >
-      <div className="flex items-center gap-3.5 min-w-0">
-        {/* Position Number */}
+      <div className="flex items-center gap-3 min-w-0">
         <div
-          className={`w-9 h-9 rounded-lg flex items-center justify-center font-black text-sm flex-shrink-0 ${
+          className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs flex-shrink-0 ${
             isFirst ? 'bg-accent text-white' : 'bg-background text-muted border border-border'
           }`}
         >
           {index + 1}
         </div>
 
-        {/* Name and Wait Time */}
         <div className="min-w-0">
-          <div className="text-sm font-bold text-white truncate">
-            {item.name}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-sm font-bold text-white truncate max-w-[130px]">
+              {item.name}
+            </span>
+            <ReasonBadge reason={item.reason || 'question'} />
+            {item.hasNotSpoken && (
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-live/20 text-live border border-live/30">
+                1st
+              </span>
+            )}
           </div>
-          <div className="text-xs text-muted font-mono mt-0.5">
+          <div className="text-[11px] text-muted font-mono mt-0.5">
             {waitText}
+            {item.speakCount !== undefined && ` • Spoke: ${item.speakCount}`}
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
         <Button
           variant={isFirst ? 'primary' : 'secondary'}
           size="sm"
           onClick={() => onGrant(item.id)}
-          className="gap-1.5 text-xs py-1"
+          className="gap-1 text-xs py-1 px-2.5"
           aria-label={`Grant floor to ${item.name}`}
         >
-          <Mic size={14} />
+          <Mic size={13} />
           <span>Grant</span>
         </Button>
 
@@ -68,7 +74,7 @@ export function QueueItem({
           title="Remove from queue"
           className="p-1.5 rounded-lg text-muted hover:text-live hover:bg-live/10 transition-colors"
         >
-          <X size={16} />
+          <X size={15} />
         </button>
       </div>
     </div>

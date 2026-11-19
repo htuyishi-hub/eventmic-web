@@ -7,7 +7,7 @@ const HOST_STORAGE_KEY = 'eventmic_host_session';
 /**
  * Pure mapping helper: computes queue, active floor, and attendee count from participant list/map.
  * @param {Map|Array|Object} remoteParticipants
- * @returns {{ attendeeCount: number, queue: Array<{ id: string, name: string, raisedAt: number }>, floor: { id: string, name: string, startedAt: number } | null }}
+ * @returns {{ attendeeCount: number, queue: Array<{ id: string, name: string, raisedAt: number, reason?: string }>, floor: { id: string, name: string, startedAt: number, role?: string, mode?: string } | null }}
  */
 export function computeQueueAndFloor(remoteParticipants) {
   const participants = remoteParticipants instanceof Map
@@ -19,13 +19,17 @@ export function computeQueueAndFloor(remoteParticipants) {
   const attendees = participants.filter(p => p.identity?.startsWith('att-'));
 
   let floor = null;
-  const speaker = attendees.find(p => p.attributes?.floor === 'granted');
+  const speaker = participants.find(p => p.attributes?.floor === 'granted');
   if (speaker) {
     floor = {
       id: speaker.identity,
-      name: speaker.name || 'Attendee',
+      name: speaker.name || 'Speaker',
       startedAt: Number(speaker.attributes?.floorStartedAt) || Date.now()
     };
+    if (speaker.attributes?.floorRole || speaker.identity?.startsWith('prin-')) {
+      floor.role = speaker.attributes?.floorRole || (speaker.identity?.startsWith('prin-') ? 'principal' : 'attendee');
+      floor.mode = speaker.attributes?.floorRole || (speaker.identity?.startsWith('prin-') ? 'principal' : 'attendee');
+    }
   }
 
   const queue = attendees
@@ -36,6 +40,7 @@ export function computeQueueAndFloor(remoteParticipants) {
     .map(p => ({
       id: p.identity,
       name: p.name || 'Attendee',
+      reason: p.attributes?.handReason || 'question',
       raisedAt: Number(p.attributes.hand) || Date.now()
     }))
     .sort((a, b) => a.raisedAt - b.raisedAt);
@@ -80,10 +85,11 @@ export class LiveKitTransport {
     }
     this.apiBase = rawBase;
     this.room = null;
-    this.role = null; // 'host' | 'attendee'
+    this.role = null; // 'admin' | 'principal' | 'attendee' | 'host'
     this.code = null;
     this.sessionName = null;
     this.myId = options.id || null;
+    this.apiToken = null;
     this.connectionState = 'disconnected';
     this.selfState = 'listening';
     this.outputDeviceId = '';
@@ -94,12 +100,6 @@ export class LiveKitTransport {
     this.listeners = new Map();
   }
 
-  /**
-   * Subscribe to transport event.
-   * @param {string} event
-   * @param {Function} handler
-   * @returns {() => void}
-   */
   on(event, handler) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
@@ -111,11 +111,6 @@ export class LiveKitTransport {
     };
   }
 
-  /**
-   * Emit event to all registered listeners.
-   * @param {string} event
-   * @param {*} data
-   */
   emit(event, data) {
     const handlers = this.listeners.get(event);
     if (handlers) {
@@ -164,11 +159,17 @@ export class LiveKitTransport {
     return '1234';
   }
 
-  /**
-   * Creates a new live event session on the server (Host only).
-   * @param {{ name: string }} params
-   * @returns {Promise<import('./types.js').SessionInfo>}
-   */
+  _getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    if (this.apiToken) {
+      headers['Authorization'] = `Bearer ${this.apiToken}`;
+    }
+    if (this.role === 'admin' || this.role === 'host') {
+      headers['x-host-passcode'] = this._getHostPasscode();
+    }
+    return headers;
+  }
+
   async createSession({ name }) {
     const passcode = this._getHostPasscode();
     const res = await fetch(`${this.apiBase}/sessions`, {
@@ -207,20 +208,12 @@ export class LiveKitTransport {
     return sessionInfo;
   }
 
-  /**
-   * Ends current live event session on server and cleans up (Host only).
-   */
   async endSession() {
     if (!this.code) return;
-    const passcode = this._getHostPasscode();
-
     try {
       await fetch(`${this.apiBase}/sessions/${this.code}/end`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-host-passcode': passcode
-        }
+        headers: this._getAuthHeaders()
       });
     } catch {}
 
@@ -238,40 +231,45 @@ export class LiveKitTransport {
     });
   }
 
-  /**
-   * Connects to LiveKit Room as host or attendee.
-   * @param {{ role: 'host' | 'attendee', code: string, name?: string }} params
-   */
-  async connect({ role, code, name }) {
-    this.role = role;
-    this.code = code.toUpperCase();
+  async connect({ role, code, name, pin, passcode }) {
+    this.role = role === 'host' ? 'admin' : role;
+    this.code = code ? code.trim().toUpperCase() : '';
     this.sessionName = name || '';
 
     this.connectionState = 'connecting';
     this.emit('connection', 'connecting');
 
-    let tokenReqBody = {
-      role,
+    const tokenReqBody = {
+      role: this.role,
       code: this.code,
-      name: name || (role === 'host' ? 'Host' : 'Attendee')
+      name: name || (this.role === 'admin' ? 'Admin' : this.role === 'principal' ? 'Speaker' : 'Attendee'),
+      pin,
+      passcode: passcode || this._getHostPasscode()
     };
 
     const headers = { 'Content-Type': 'application/json' };
-
-    if (role === 'host') {
-      headers['x-host-passcode'] = this._getHostPasscode();
-    } else {
+    if (this.role === 'admin') {
+      headers['x-host-passcode'] = tokenReqBody.passcode;
+    } else if (this.role === 'attendee') {
       this.myId = getOrCreateAttendeeId();
       tokenReqBody.identity = this.myId;
     }
 
     let tokenRes;
     try {
-      tokenRes = await fetch(`${this.apiBase}/token`, {
+      tokenRes = await fetch(`${this.apiBase}/auth`, {
         method: 'POST',
         headers,
         body: JSON.stringify(tokenReqBody)
       });
+      // Fallback to /token if /auth returned 404 (legacy endpoint)
+      if (tokenRes.status === 404) {
+        tokenRes = await fetch(`${this.apiBase}/token`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(tokenReqBody)
+        });
+      }
     } catch {
       this.connectionState = 'disconnected';
       this.emit('connection', 'disconnected');
@@ -289,6 +287,7 @@ export class LiveKitTransport {
       else if (tokenRes.status === 410) errCode = 'SESSION_ENDED';
       else if (tokenRes.status === 409) errCode = 'FULL';
       else if (tokenRes.status === 401) errCode = 'UNAUTHORIZED';
+      else if (tokenRes.status === 403) errCode = 'FORBIDDEN';
 
       const errorPayload = {
         code: err.code || errCode,
@@ -298,9 +297,11 @@ export class LiveKitTransport {
       throw new Error(errorPayload.message);
     }
 
-    const { token, url } = await tokenRes.json();
+    const { token, url, apiToken, identity, name: confirmedName } = await tokenRes.json();
+    this.apiToken = apiToken || null;
+    if (identity) this.myId = identity;
+    if (confirmedName) this.name = confirmedName;
 
-    // Initialize Room with speech-optimized options
     this.room = new Room({
       adaptiveStream: false,
       dynacast: false,
@@ -337,8 +338,11 @@ export class LiveKitTransport {
         });
       }
 
-      if (this.role === 'host') {
+      if (this.role === 'admin') {
         this._syncHostState();
+        this.fetchSessionState().catch(() => {});
+      } else if (this.role === 'principal') {
+        this.fetchSessionState().catch(() => {});
       } else {
         this.selfState = 'listening';
         this.emit('self', 'listening');
@@ -354,14 +358,12 @@ export class LiveKitTransport {
   _setupRoomEvents() {
     if (!this.room) return;
 
-    // Connection state changes
     this.room.on(RoomEvent.ConnectionStateChanged, (state) => {
       const mapped = mapConnectionState(state);
       this.connectionState = mapped;
       this.emit('connection', mapped);
     });
 
-    // Room disconnected
     this.room.on(RoomEvent.Disconnected, (reason) => {
       this.connectionState = 'disconnected';
       this.emit('connection', 'disconnected');
@@ -375,19 +377,19 @@ export class LiveKitTransport {
       }
     });
 
-    // Audio playback policy changes
     this.room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
       this.emit('audio_playback_status', this.room.canPlaybackAudio);
     });
 
-    if (this.role === 'host') {
-      // Re-emit queue, floor, attendee count
-      const handleParticipantsChange = () => this._syncHostState();
+    // Track audio subscription for admin and principal
+    if (this.role === 'admin' || this.role === 'principal') {
+      const handleParticipantsChange = () => {
+        if (this.role === 'admin') this._syncHostState();
+      };
       this.room.on(RoomEvent.ParticipantConnected, handleParticipantsChange);
       this.room.on(RoomEvent.ParticipantDisconnected, handleParticipantsChange);
       this.room.on(RoomEvent.ParticipantAttributesChanged, handleParticipantsChange);
 
-      // Track subscription (Active speaker audio - expose MediaStream to HostAudioEngine)
       this.room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio || track.kind === 'audio') {
           if (track.mediaStreamTrack) {
@@ -406,46 +408,45 @@ export class LiveKitTransport {
       });
     }
 
-    if (this.role === 'attendee') {
-      // Check permissions and floor assignments
+    // Role-specific floor handling for participant
+    if (this.role === 'attendee' || this.role === 'principal') {
       this.room.on(RoomEvent.ParticipantPermissionsChanged, (p) => {
         if (p === this.room.localParticipant) {
-          this._checkAttendeeFloor();
+          this._checkSpeakingFloor();
         }
       });
 
       this.room.on(RoomEvent.ParticipantAttributesChanged, (attrs, p) => {
         if (p === this.room.localParticipant) {
-          this._checkAttendeeFloor();
-        } else {
+          this._checkSpeakingFloor();
+        } else if (this.role === 'attendee') {
           this._syncAttendeeQueue();
         }
       });
-
-      // Receive broadcast queue from host
-      this.room.on(RoomEvent.DataReceived, (payload, participant, kind, topic) => {
-        if (topic === 'queue') {
-          try {
-            const decoded = new TextDecoder().decode(payload);
-            const data = JSON.parse(decoded);
-            if (data.type === 'queue' && Array.isArray(data.queue)) {
-              this.emit('queue', data.queue);
-            }
-          } catch {}
-        }
-      });
     }
+
+    // Listen for broadcast data
+    this.room.on(RoomEvent.DataReceived, (payload, participant, kind, topic) => {
+      if (topic === 'queue') {
+        try {
+          const decoded = new TextDecoder().decode(payload);
+          const data = JSON.parse(decoded);
+          if (data.type === 'queue' && Array.isArray(data.queue)) {
+            this.emit('queue', data.queue);
+          }
+        } catch {}
+      }
+    });
   }
 
   _syncHostState() {
-    if (!this.room || this.role !== 'host') return;
+    if (!this.room || (this.role !== 'admin' && this.role !== 'host')) return;
 
     const { attendeeCount, queue, floor } = computeQueueAndFloor(this.room.remoteParticipants);
     this.emit('attendees', { count: attendeeCount });
     this.emit('queue', queue);
     this.emit('floor', floor);
 
-    // Broadcast queue to attendees
     if (this.room.localParticipant?.permissions?.canPublishData) {
       try {
         const payload = new TextEncoder().encode(JSON.stringify({ type: 'queue', queue }));
@@ -462,27 +463,20 @@ export class LiveKitTransport {
       participants.push(this.room.localParticipant);
     }
 
-    const queue = participants
-      .filter(p => {
-        const hand = p.attributes?.hand;
-        return hand && String(hand).trim() !== '' && p.attributes?.floor !== 'granted';
-      })
-      .map(p => ({
-        id: p.identity,
-        name: p.name || 'Attendee',
-        raisedAt: Number(p.attributes.hand) || Date.now()
-      }))
-      .sort((a, b) => a.raisedAt - b.raisedAt);
-
+    const { queue } = computeQueueAndFloor(participants);
     if (queue.length > 0) {
       this.emit('queue', queue);
     }
   }
 
-  async _checkAttendeeFloor() {
+  async _checkSpeakingFloor() {
     if (!this.room?.localParticipant) return;
     const local = this.room.localParticipant;
     const canPublish = Boolean(local.permissions?.canPublish || local.attributes?.floor === 'granted');
+
+    if (local.attributes?.floorRevokedReason) {
+      this.emit('preempted', local.attributes.floorRevokedReason);
+    }
 
     if (canPublish) {
       if (this.selfState !== 'on_air') {
@@ -503,9 +497,14 @@ export class LiveKitTransport {
         } catch {}
       }
 
-      if (local.attributes?.hand && String(local.attributes.hand).trim() !== '') {
-        this.selfState = 'hand_raised';
-        this.emit('self', 'hand_raised');
+      if (this.role === 'attendee') {
+        if (local.attributes?.hand && String(local.attributes.hand).trim() !== '') {
+          this.selfState = 'hand_raised';
+          this.emit('self', 'hand_raised');
+        } else {
+          this.selfState = 'listening';
+          this.emit('self', 'listening');
+        }
       } else {
         this.selfState = 'listening';
         this.emit('self', 'listening');
@@ -513,9 +512,6 @@ export class LiveKitTransport {
     }
   }
 
-  /**
-   * Disconnects from the LiveKit room and cleans up resources.
-   */
   async disconnect() {
     this.audioMeter.stop();
 
@@ -539,40 +535,83 @@ export class LiveKitTransport {
     this.emit('connection', 'disconnected');
   }
 
-  /**
-   * Raises hand (Attendee only).
-   */
-  async raiseHand() {
+  async raiseHand(options = {}) {
+    const reason = options.reason || 'question';
     if (this.room?.localParticipant) {
-      await this.room.localParticipant.setAttributes({ hand: String(Date.now()) });
+      await this.room.localParticipant.setAttributes({
+        hand: String(Date.now()),
+        handReason: reason
+      });
       this.selfState = 'hand_raised';
       this.emit('self', 'hand_raised');
     }
+    if (this.apiToken) {
+      await fetch(`${this.apiBase}/floor/raise-hand`, {
+        method: 'POST',
+        headers: this._getAuthHeaders(),
+        body: JSON.stringify({ code: this.code, reason })
+      }).catch(() => {});
+    }
   }
 
-  /**
-   * Lowers hand (Attendee only).
-   */
   async lowerHand() {
     if (this.room?.localParticipant) {
       await this.room.localParticipant.setAttributes({ hand: '' });
       this.selfState = 'listening';
       this.emit('self', 'listening');
     }
+    if (this.apiToken) {
+      await fetch(`${this.apiBase}/floor/lower-hand`, {
+        method: 'POST',
+        headers: this._getAuthHeaders(),
+        body: JSON.stringify({ code: this.code })
+      }).catch(() => {});
+    }
   }
 
-  /**
-   * Grants floor to attendee (Host only).
-   * @param {string} attendeeId
-   */
+  async takeFloor() {
+    const res = await fetch(`${this.apiBase}/floor/take`, {
+      method: 'POST',
+      headers: this._getAuthHeaders(),
+      body: JSON.stringify({ code: this.code })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to take floor');
+    }
+    return res.json();
+  }
+
+  async requestSpeak() {
+    const res = await fetch(`${this.apiBase}/floor/request-speak`, {
+      method: 'POST',
+      headers: this._getAuthHeaders(),
+      body: JSON.stringify({ code: this.code })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to request speak');
+    }
+    return res.json();
+  }
+
+  async allowPrincipal(principalId) {
+    const res = await fetch(`${this.apiBase}/floor/allow`, {
+      method: 'POST',
+      headers: this._getAuthHeaders(),
+      body: JSON.stringify({ code: this.code, targetPrincipalId: principalId })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to allow speaker handover');
+    }
+    return res.json();
+  }
+
   async grant(attendeeId) {
-    const passcode = this._getHostPasscode();
     const res = await fetch(`${this.apiBase}/floor/grant`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-host-passcode': passcode
-      },
+      headers: this._getAuthHeaders(),
       body: JSON.stringify({ code: this.code, identity: attendeeId })
     });
 
@@ -582,18 +621,10 @@ export class LiveKitTransport {
     }
   }
 
-  /**
-   * Revokes floor from attendee (Host only).
-   * @param {string} attendeeId
-   */
   async revoke(attendeeId) {
-    const passcode = this._getHostPasscode();
     const res = await fetch(`${this.apiBase}/floor/revoke`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-host-passcode': passcode
-      },
+      headers: this._getAuthHeaders(),
       body: JSON.stringify({ code: this.code, identity: attendeeId })
     });
 
@@ -603,10 +634,85 @@ export class LiveKitTransport {
     }
   }
 
-  /**
-   * Server-side and local mute for active speaker (Host only).
-   * @param {boolean} muted
-   */
+  async createPrincipal(name) {
+    const res = await fetch(`${this.apiBase}/sessions/${this.code}/principals`, {
+      method: 'POST',
+      headers: this._getAuthHeaders(),
+      body: JSON.stringify({ name })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create principal');
+    }
+    return res.json();
+  }
+
+  async getPrincipals() {
+    const res = await fetch(`${this.apiBase}/sessions/${this.code}/principals`, {
+      headers: this._getAuthHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to get principals');
+    }
+    return res.json();
+  }
+
+  async revokePrincipal(id) {
+    const res = await fetch(`${this.apiBase}/sessions/${this.code}/principals/${id}`, {
+      method: 'DELETE',
+      headers: this._getAuthHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to revoke principal');
+    }
+    return res.json();
+  }
+
+  async regeneratePrincipalPin(id) {
+    const res = await fetch(`${this.apiBase}/sessions/${this.code}/principals/${id}/regenerate`, {
+      method: 'POST',
+      headers: this._getAuthHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to regenerate PIN');
+    }
+    const data = await res.json();
+    return data.pin;
+  }
+
+  async updateSettings(settings) {
+    const res = await fetch(`${this.apiBase}/sessions/${this.code}/settings`, {
+      method: 'POST',
+      headers: this._getAuthHeaders(),
+      body: JSON.stringify(settings)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update settings');
+    }
+    return res.json();
+  }
+
+  async fetchSessionState() {
+    const res = await fetch(`${this.apiBase}/sessions/${this.code}/state`, {
+      headers: this._getAuthHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to fetch session state');
+    }
+    const data = await res.json();
+    if (data.queue) this.emit('queue', data.queue);
+    if (data.floor !== undefined) this.emit('floor', data.floor);
+    if (data.principals) this.emit('principals', data.principals);
+    if (data.principalQueue) this.emit('principalQueue', data.principalQueue);
+    if (data.fairModeActive !== undefined) this.emit('fairMode', data.fairModeActive);
+    return data;
+  }
+
   async muteSpeaker(muted) {
     if (this.audioElement) {
       this.audioElement.muted = Boolean(muted);
@@ -616,14 +722,10 @@ export class LiveKitTransport {
     const { floor } = computeQueueAndFloor(this.room.remoteParticipants);
     if (!floor) return;
 
-    const passcode = this._getHostPasscode();
     try {
       await fetch(`${this.apiBase}/floor/mute`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-host-passcode': passcode
-        },
+        headers: this._getAuthHeaders(),
         body: JSON.stringify({ code: this.code, identity: floor.id, muted: Boolean(muted) })
       });
     } catch (err) {
@@ -631,12 +733,7 @@ export class LiveKitTransport {
     }
   }
 
-  /**
-   * Send audio level (~10x/sec while on air).
-   * @param {number} level
-   */
   async sendLevel(level) {
-    // In LiveKit, real WebRTC audio is published; sendLevel is kept for TransportInterface parity
     return Promise.resolve();
   }
 }

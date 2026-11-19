@@ -25,6 +25,8 @@ export function JoinPage() {
     floor,
     selfState,
     error,
+    preemptedMessage,
+    clearPreempted,
     connect,
     raiseHand,
     lowerHand,
@@ -33,7 +35,6 @@ export function JoinPage() {
   } = useSession();
 
   const { connectionState } = useTransport();
-
   const [hasJoined, setHasJoined] = useState(false);
   const [attendeeName, setAttendeeName] = useState(() => {
     try {
@@ -45,17 +46,13 @@ export function JoinPage() {
 
   const [toastMessage, setToastMessage] = useState('');
   const [micDeniedError, setMicDeniedError] = useState(false);
-
   const prevSelfStateRef = useRef(selfState);
   const myId = getOrCreateAttendeeId();
 
-  // Validate session code format
   const isCodeFormatValid = isValidSessionCode(code);
 
-  // Initial connect when code is valid
   useEffect(() => {
     if (!isCodeFormatValid) return;
-
     connect({
       role: 'attendee',
       code,
@@ -63,15 +60,16 @@ export function JoinPage() {
     });
   }, [code, isCodeFormatValid, connect]);
 
-  // Detect when host revokes the attendee's turn
   useEffect(() => {
-    if (prevSelfStateRef.current === 'on_air' && selfState !== 'on_air') {
-      setToastMessage('The host ended your turn.');
+    if (preemptedMessage) {
+      setToastMessage(preemptedMessage);
+      clearPreempted();
+    } else if (prevSelfStateRef.current === 'on_air' && selfState !== 'on_air') {
+      setToastMessage('Your turn ended.');
     }
     prevSelfStateRef.current = selfState;
-  }, [selfState]);
+  }, [selfState, preemptedMessage, clearPreempted]);
 
-  // Handle user completing JoinScreen
   const handleJoinSubmit = async (enteredName) => {
     setAttendeeName(enteredName);
     setHasJoined(true);
@@ -82,7 +80,6 @@ export function JoinPage() {
     });
   };
 
-  // Re-attempt connecting
   const handleRetry = () => {
     clearError();
     setMicDeniedError(false);
@@ -93,24 +90,16 @@ export function JoinPage() {
     });
   };
 
-  // 1. Invalid Room Code
   if (!isCodeFormatValid) {
-    return (
-      <ErrorScreen
-        variant="INVALID_CODE"
-        onBack={() => navigate('/')}
-      />
-    );
+    return <ErrorScreen variant="INVALID_CODE" onBack={() => navigate('/')} />;
   }
 
-  // 2. Microphone Permission Denied
   if (micDeniedError) {
     return (
       <ErrorScreen
         variant="MIC_DENIED"
         onRetry={() => {
           setMicDeniedError(false);
-          // Return to listening or raise hand
           lowerHand();
         }}
         onBack={() => navigate('/')}
@@ -118,7 +107,6 @@ export function JoinPage() {
     );
   }
 
-  // 3. Transport or Session Errors
   if (error) {
     return (
       <ErrorScreen
@@ -130,29 +118,21 @@ export function JoinPage() {
     );
   }
 
-  // 4. Session Ended Screen
   if (session?.status === 'ended') {
     return <EndedScreen session={session} />;
   }
 
-  // 5. Initial Join Screen (Gather Display Name)
   if (!hasJoined) {
-    return (
-      <JoinScreen
-        session={session}
-        initialCode={code}
-        onJoin={handleJoinSubmit}
-      />
-    );
+    return <JoinScreen session={session} initialCode={code} onJoin={handleJoinSubmit} />;
   }
 
-  // Calculate position in queue
+  const queuedItem = queue.find(item => item.id === myId);
   const queueIndex = queue.findIndex(item => item.id === myId);
   const queuePosition = queueIndex !== -1 ? queueIndex + 1 : 1;
+  const myReason = queuedItem?.reason || 'question';
 
   return (
     <div className="relative min-h-screen bg-background">
-      {/* Reconnecting Banner */}
       {connectionState === 'reconnecting' && (
         <div className="sticky top-0 z-50 flex items-center justify-center gap-2 px-4 py-2 bg-warning text-black text-xs font-bold shadow-md">
           <Spinner size="sm" className="border-t-black border-r-black/20" />
@@ -160,7 +140,6 @@ export function JoinPage() {
         </div>
       )}
 
-      {/* Screen Routing based on selfState */}
       {selfState === 'on_air' ? (
         <OnAirScreen
           session={session}
@@ -172,17 +151,17 @@ export function JoinPage() {
         <HandRaisedScreen
           session={session}
           queuePosition={queuePosition}
+          reason={myReason}
           onLowerHand={() => lowerHand()}
         />
       ) : (
         <ListeningScreen
           session={session}
           attendeeName={attendeeName}
-          onRaiseHand={() => raiseHand()}
+          onRaiseHand={raiseHand}
         />
       )}
 
-      {/* Toast Notification */}
       {toastMessage && (
         <Toast
           message={toastMessage}

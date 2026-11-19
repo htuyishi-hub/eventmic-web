@@ -6,7 +6,7 @@ import { useHostAudio } from '../../lib/useHostAudio.js';
 import { useHostShortcuts } from './useHostShortcuts.js';
 import { useSessionStats } from './useSessionStats.js';
 import { SessionBar } from './SessionBar.jsx';
-import { QueueList } from './QueueList.jsx';
+import { AdminTabs } from '../admin/AdminTabs.jsx';
 import { StageView } from './StageView.jsx';
 import { RoomQrModal } from './RoomQrModal.jsx';
 import { EndSessionConfirm } from './EndSessionConfirm.jsx';
@@ -121,7 +121,7 @@ export function Dashboard({ onSessionEndedWithStats }) {
 
       <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 p-4 sm:p-5">
         <section className="md:col-span-5 lg:col-span-4 h-full min-h-0">
-          <QueueList queue={queue} onGrant={grant} onDrop={revoke} onOpenQr={() => setIsQrOpen(true)} />
+          <AdminTabs queue={queue} onGrant={grant} onDrop={revoke} onOpenQr={() => setIsQrOpen(true)} />
         </section>
 
         <section className="md:col-span-7 lg:col-span-8 h-full min-h-0">

@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { TransportProvider } from './context/TransportContext.jsx';
 import { SessionProvider } from './context/SessionContext.jsx';
 import { HomePage } from './pages/HomePage.jsx';
-import { HostPage } from './pages/HostPage.jsx';
+import { AdminPage } from './pages/AdminPage.jsx';
+import { SpeakerPage } from './pages/SpeakerPage.jsx';
 import { JoinPage } from './pages/JoinPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
 
@@ -14,7 +15,9 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/host" element={<HostPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/host" element={<Navigate to="/admin" replace />} />
+            <Route path="/speaker" element={<SpeakerPage />} />
             <Route path="/join/:code" element={<JoinPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

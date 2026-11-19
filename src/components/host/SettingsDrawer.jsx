@@ -6,6 +6,7 @@ import { ChannelRoutingSection } from './settings/ChannelRoutingSection.jsx';
 import { ProcessingSection } from './settings/ProcessingSection.jsx';
 import { TestToolsSection } from './settings/TestToolsSection.jsx';
 import { CapabilitiesSection } from './settings/CapabilitiesSection.jsx';
+import { FairModeSection } from '../admin/FairModeSection.jsx';
 import { useTransport } from '../../context/TransportContext.jsx';
 
 export function SettingsDrawer({
@@ -136,6 +137,9 @@ export function SettingsDrawer({
             ))}
           </div>
         </div>
+
+        {/* Fair Mode Settings */}
+        <FairModeSection />
 
         {/* 7. Transport Architecture Info */}
         <div className="p-4 bg-background border border-border rounded-xl space-y-1.5 text-xs text-muted">

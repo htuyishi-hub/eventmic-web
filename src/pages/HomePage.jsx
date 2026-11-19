@@ -100,26 +100,37 @@ export function HomePage() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* Card 2: Host a Session */}
+        {/* Card 2: Admin & Speaker Access */}
         <div className="p-6 bg-surface border border-border rounded-2xl shadow-xl space-y-3 text-center">
           <div>
             <h2 className="text-base font-bold text-white uppercase tracking-wider mb-1">
-              Audio Engineer / Host
+              Admin &amp; Speaker Access
             </h2>
             <p className="text-xs text-muted">
-              Create a room, control the floor, and monitor audio meters.
+              Manage the event, control the floor, or speak from the stage.
             </p>
           </div>
 
-          <Button
-            variant="secondary"
-            size="lg"
-            onClick={() => navigate('/host')}
-            className="w-full gap-2 text-sm font-bold uppercase tracking-wider border-accent/40 text-accent hover:bg-accent/10"
-          >
-            <span>Host a Session</span>
-            <ArrowRight size={18} />
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => navigate('/admin')}
+              className="w-full gap-2 text-sm font-bold uppercase tracking-wider border-accent/40 text-accent hover:bg-accent/10"
+            >
+              <span>Admin Console</span>
+              <ArrowRight size={18} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => navigate('/speaker')}
+              className="w-full gap-2 text-xs font-semibold text-muted hover:text-white"
+            >
+              <span>Speaker Portal (/speaker)</span>
+              <ArrowRight size={14} />
+            </Button>
+          </div>
         </div>
       </div>
 

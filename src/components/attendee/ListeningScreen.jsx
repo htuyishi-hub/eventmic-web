@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Hand, Radio, ShieldCheck } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 
+const REASONS = [
+  { id: 'question', label: 'Question' },
+  { id: 'comment', label: 'Comment' },
+  { id: 'compliment', label: 'Compliment' },
+  { id: 'clarification', label: 'Clarification' }
+];
+
 export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
+  const [selectedReason, setSelectedReason] = useState('question');
+
   return (
     <div className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto bg-background text-foreground">
       {/* Top Status */}
@@ -32,7 +41,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
               Stage Audio Reinforced
             </h3>
             <p className="text-xs text-muted leading-relaxed">
-              Listen to the live presentation. When you want to ask a question, tap Raise Hand below to join the democratic queue.
+              Listen to the live presentation. Choose your reason and tap Raise Hand below to join the queue.
             </p>
           </div>
         </div>
@@ -40,10 +49,36 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
 
       {/* Bottom Action Area */}
       <div className="space-y-3 pb-safe">
+        {/* Reason Selector Chips */}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-muted text-center mb-2">
+            Reason for Speaking
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {REASONS.map((r) => {
+              const isSelected = selectedReason === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setSelectedReason(r.id)}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    isSelected
+                      ? 'bg-accent border-accent text-white shadow-md shadow-accent/20'
+                      : 'bg-surface border-border text-muted hover:text-white hover:bg-surface/80'
+                  }`}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <Button
           size="huge"
           variant="primary"
-          onClick={onRaiseHand}
+          onClick={() => onRaiseHand({ reason: selectedReason })}
           className="w-full gap-3 text-lg font-black uppercase tracking-wider"
         >
           <Hand size={24} />
@@ -52,7 +87,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
 
         <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted text-center">
           <ShieldCheck size={14} className="text-accent flex-shrink-0" />
-          <span>Your microphone stays off until the host gives you the floor.</span>
+          <span>Your microphone stays off until granted the floor.</span>
         </div>
       </div>
     </div>

@@ -1,10 +1,12 @@
 import React from 'react';
-import { Hand, Clock } from 'lucide-react';
+import { Hand } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
+import { ReasonBadge } from '../admin/ReasonBadge.jsx';
 
 export function HandRaisedScreen({
   session,
   queuePosition = 1,
+  reason = 'question',
   onLowerHand
 }) {
   return (
@@ -36,10 +38,13 @@ export function HandRaisedScreen({
             <p className="text-sm font-semibold text-accent">
               You are #{queuePosition} in line
             </p>
+            <div className="pt-1">
+              <ReasonBadge reason={reason} />
+            </div>
           </div>
 
           <p className="text-xs text-muted text-center max-w-xs pt-2">
-            The host will grant your floor when it is your turn. Please keep your device unlocked.
+            The speaker or admin will grant your floor when it is your turn. Please keep your device unlocked.
           </p>
         </div>
       </div>

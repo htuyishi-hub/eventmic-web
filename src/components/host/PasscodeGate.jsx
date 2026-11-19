@@ -18,7 +18,7 @@ export function PasscodeGate({ onUnlocked }) {
       } catch {}
       onUnlocked();
     } else {
-      setError('Incorrect host passcode. Please try again.');
+      setError('Incorrect admin passcode. Please try again.');
       setPasscode('');
     }
   };
@@ -31,10 +31,10 @@ export function PasscodeGate({ onUnlocked }) {
         </div>
 
         <h1 className="text-xl font-black text-center text-white uppercase tracking-wider mb-2">
-          Host Authentication
+          Admin Authentication
         </h1>
         <p className="text-xs text-center text-muted mb-6">
-          Enter the host security passcode to manage live stage audio and Floor queue.
+          Enter the admin security passcode to manage live stage audio and Floor queue.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
