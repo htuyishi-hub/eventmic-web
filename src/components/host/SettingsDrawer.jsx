@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, Play, Clock, Sparkles } from 'lucide-react';
 import { Drawer } from '../ui/Drawer.jsx';
 import { Button } from '../ui/Button.jsx';
@@ -13,6 +13,7 @@ export function SettingsDrawer({
   const [selectedDeviceId, setSelectedDeviceId] = useState('');
   const [sinkIdSupported, setSinkIdSupported] = useState(false);
   const [isPlayingTestTone, setIsPlayingTestTone] = useState(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     // Check if setSinkId is supported in current browser
@@ -31,12 +32,33 @@ export function SettingsDrawer({
     }
   }, [selectedDeviceId]);
 
+  // Handle device change and invoke setSinkId on audio element
+  const handleDeviceChange = async (e) => {
+    const newId = e.target.value;
+    setSelectedDeviceId(newId);
+    if (audioRef.current && typeof audioRef.current.setSinkId === 'function') {
+      try {
+        await audioRef.current.setSinkId(newId);
+      } catch (err) {
+        console.warn('[Settings] Failed to set sinkId on audio element:', err);
+      }
+    }
+  };
+
   // Play short generated test tone using Web Audio API
-  const handlePlayTestSound = () => {
+  const handlePlayTestSound = async () => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
+
+      // Route AudioContext to chosen device if supported
+      if (selectedDeviceId && typeof ctx.setSinkId === 'function') {
+        try {
+          await ctx.setSinkId(selectedDeviceId);
+        } catch {}
+      }
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -71,48 +93,72 @@ export function SettingsDrawer({
       title="Console Settings"
       width="max-w-md"
     >
-      {/* 1. Audio Output Device */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-white font-bold text-sm">
-          <Volume2 size={16} className="text-accent" />
-          <span>Audio Output Device</span>
-        </div>
-        <p className="text-xs text-muted">
-          Route attendee floor audio to your venue mixing console, soundcard, or headphones.
-        </p>
+      {/* Hidden audio element for setSinkId routing */}
+      <audio ref={audioRef} className="hidden" aria-hidden="true" />
 
-        {sinkIdSupported && audioDevices.length > 0 ? (
-          <select
-            value={selectedDeviceId}
-            onChange={(e) => setSelectedDeviceId(e.target.value)}
-            className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-white text-xs focus:border-accent focus:outline-none"
-          >
-            {audioDevices.map((d, i) => (
-              <option key={d.deviceId || i} value={d.deviceId}>
-                {d.label || `Audio Device ${i + 1}`}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <div className="p-3 bg-background border border-border rounded-xl text-xs text-muted">
-            {sinkIdSupported
-              ? 'Default System Audio Output (Browser device enumeration active)'
-              : 'Default System Output (Custom device selection not supported in this browser)'}
+      {/* 1. Audio Output Device (hides gracefully if setSinkId unsupported) */}
+      {sinkIdSupported ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-white font-bold text-sm">
+            <Volume2 size={16} className="text-accent" />
+            <span>Audio Output Device</span>
           </div>
-        )}
+          <p className="text-xs text-muted">
+            Route attendee floor audio to your venue mixing console, soundcard, or headphones.
+          </p>
 
-        {/* Play Test Tone */}
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handlePlayTestSound}
-          disabled={isPlayingTestTone}
-          className="gap-2 text-xs w-full"
-        >
-          <Play size={14} className={isPlayingTestTone ? 'animate-pulse text-accent' : ''} />
-          <span>{isPlayingTestTone ? 'Playing 440Hz Tone...' : 'Play Test Sound'}</span>
-        </Button>
-      </div>
+          {audioDevices.length > 0 ? (
+            <select
+              value={selectedDeviceId}
+              onChange={handleDeviceChange}
+              className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-white text-xs focus:border-accent focus:outline-none"
+            >
+              {audioDevices.map((d, i) => (
+                <option key={d.deviceId || i} value={d.deviceId}>
+                  {d.label || `Audio Output ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="p-3 bg-background border border-border rounded-xl text-xs text-muted">
+              Default System Audio Output (Browser device enumeration active)
+            </div>
+          )}
+
+          {/* Play Test Tone */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handlePlayTestSound}
+            disabled={isPlayingTestTone}
+            className="gap-2 text-xs w-full"
+          >
+            <Play size={14} className={isPlayingTestTone ? 'animate-pulse text-accent' : ''} />
+            <span>{isPlayingTestTone ? 'Playing 440Hz Tone...' : 'Play Test Sound'}</span>
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Test Sound is still available even if custom sink routing is unsupported */}
+          <div className="flex items-center gap-2 text-white font-bold text-sm">
+            <Volume2 size={16} className="text-accent" />
+            <span>Audio Output</span>
+          </div>
+          <p className="text-xs text-muted">
+            Custom audio output routing is not supported by this browser. Default audio output is active.
+          </p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handlePlayTestSound}
+            disabled={isPlayingTestTone}
+            className="gap-2 text-xs w-full"
+          >
+            <Play size={14} className={isPlayingTestTone ? 'animate-pulse text-accent' : ''} />
+            <span>{isPlayingTestTone ? 'Playing 440Hz Tone...' : 'Play Test Sound'}</span>
+          </Button>
+        </div>
+      )}
 
       <hr className="border-border" />
 

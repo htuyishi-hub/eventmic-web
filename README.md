@@ -190,3 +190,19 @@ In Phase 2, `LiveKitTransport` replaces `MockTransport`:
 2. **Audio Track**: When granted, attendee publishes their WebRTC local microphone track (`room.localParticipant.setMicrophoneEnabled(true)`).
 3. **Sound Output**: The host tab subscribes to the active speaker's audio track and routes it directly to the designated venue output via Web Audio / `setSinkId`.
 4. Zero application UI or page changes are required—only switching `VITE_TRANSPORT=livekit` in `.env`.
+
+---
+
+## Known Limitations and Deviations
+
+1. **Same-Origin Mock Transport Scope**:
+   - Phase 1 relies on the browser's native `BroadcastChannel` API to allow complete zero-configuration testing across multiple browser tabs without requiring external servers or API keys. Because `BroadcastChannel` is scoped to the same origin (`localhost:5173`), testing across separate physical devices requires Phase 2's `LiveKitTransport`.
+2. **Audio Data in Phase 1 vs Phase 2**:
+   - Attendees granted the floor have their real local microphone input analyzed in real time via Web Audio `AnalyserNode`, sending live numerical audio levels (0..1 at ~10 Hz) to drive the host and attendee visual meters. Raw audio waveforms are not broadcasted over the mock channel to prevent memory and event loop saturation; actual audio streaming is handled by WebRTC in Phase 2.
+3. **Audio Output Device Selection (`setSinkId`)**:
+   - The output device selector relies on `HTMLMediaElement.setSinkId` and `AudioContext.setSinkId`. While supported in Chromium browsers (Chrome, Edge, Brave), Safari and Firefox do not currently support custom sink routing. On unsupported browsers, the device selector gracefully hides, defaulting to system audio output, while test tone playback remains fully functional.
+4. **Inactive Tab Throttling**:
+   - Modern browsers throttle background tab timers (`setInterval`) down to 1s or coarser intervals. The mock transport's 3-second heartbeat and 8-second timeout are tuned to prevent false disconnects, but keeping the host dashboard visible in an active window provides the most responsive experience.
+5. **Attendee Capacity**:
+   - Mock transport enforces an upper limit of 200 concurrent attendees per room (`code: 'FULL'`), returning an explicit capacity error screen with retry controls for any subsequent participants.
+

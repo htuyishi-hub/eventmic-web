@@ -79,6 +79,7 @@ export function Dashboard({ onSessionEndedWithStats }) {
       if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable) {
         return;
       }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       if (e.key === 'g' || e.key === 'G') {
         if (queue.length > 0) {
