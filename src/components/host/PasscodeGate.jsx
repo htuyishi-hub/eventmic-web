@@ -14,6 +14,7 @@ export function PasscodeGate({ onUnlocked }) {
     if (passcode === expectedPasscode) {
       try {
         sessionStorage.setItem(PASSCODE_STORAGE_KEY, 'true');
+        sessionStorage.setItem('eventmic_host_passcode', passcode);
       } catch {}
       onUnlocked();
     } else {

@@ -39,12 +39,12 @@ export function getOrCreateAttendeeId() {
   const STORAGE_KEY = 'eventmic_attendee_id';
   try {
     let id = sessionStorage.getItem(STORAGE_KEY);
-    if (!id) {
-      id = 'att_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
+    if (!id || !/^att-[a-z0-9]{6,16}$/.test(id)) {
+      id = 'att-' + Math.random().toString(36).substring(2, 12);
       sessionStorage.setItem(STORAGE_KEY, id);
     }
     return id;
   } catch {
-    return 'att_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
+    return 'att-' + Math.random().toString(36).substring(2, 12);
   }
 }

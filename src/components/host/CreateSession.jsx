@@ -17,6 +17,8 @@ export function CreateSession({ onStartSession, onResumeSession }) {
       const parsed = JSON.parse(raw);
       if (parsed?.session?.status === 'live') {
         savedSession = parsed.session;
+      } else if (parsed?.status === 'live' || (parsed?.code && parsed?.name)) {
+        savedSession = parsed;
       }
     }
   } catch {}

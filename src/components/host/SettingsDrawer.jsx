@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, Play, Clock, Sparkles } from 'lucide-react';
 import { Drawer } from '../ui/Drawer.jsx';
 import { Button } from '../ui/Button.jsx';
+import { useTransport } from '../../context/TransportContext.jsx';
 
 export function SettingsDrawer({
   isOpen,
@@ -9,6 +10,7 @@ export function SettingsDrawer({
   timeLimitMinutes = 0,
   onTimeLimitChange
 }) {
+  const { transport } = useTransport();
   const [audioDevices, setAudioDevices] = useState([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState('');
   const [sinkIdSupported, setSinkIdSupported] = useState(false);
@@ -32,10 +34,19 @@ export function SettingsDrawer({
     }
   }, [selectedDeviceId]);
 
-  // Handle device change and invoke setSinkId on audio element
+  // Handle device change and invoke setSinkId on audio element and transport
   const handleDeviceChange = async (e) => {
     const newId = e.target.value;
     setSelectedDeviceId(newId);
+
+    if (transport && typeof transport.setOutputDevice === 'function') {
+      try {
+        await transport.setOutputDevice(newId);
+      } catch (err) {
+        console.warn('[Settings] Failed to set output device on transport:', err);
+      }
+    }
+
     if (audioRef.current && typeof audioRef.current.setSinkId === 'function') {
       try {
         await audioRef.current.setSinkId(newId);

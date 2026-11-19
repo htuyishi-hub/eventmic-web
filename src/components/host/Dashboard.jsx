@@ -8,6 +8,7 @@ import { RoomQrModal } from './RoomQrModal.jsx';
 import { EndSessionConfirm } from './EndSessionConfirm.jsx';
 import { SettingsDrawer } from './SettingsDrawer.jsx';
 import { Toast } from '../ui/Toast.jsx';
+import { Button } from '../ui/Button.jsx';
 
 export function Dashboard({ onSessionEndedWithStats }) {
   const {
@@ -23,13 +24,29 @@ export function Dashboard({ onSessionEndedWithStats }) {
     endSession
   } = useSession();
 
-  const { connectionState } = useTransport();
+  const { connectionState, transport } = useTransport();
 
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(0);
+  const [canAudioPlay, setCanAudioPlay] = useState(
+    transport?.canPlaybackAudio !== undefined ? transport.canPlaybackAudio : true
+  );
+
+  useEffect(() => {
+    if (!transport) return;
+    if (typeof transport.canPlaybackAudio === 'boolean') {
+      setCanAudioPlay(transport.canPlaybackAudio);
+    }
+    const unsub = transport.on?.('audio_playback_status', (canPlay) => {
+      setCanAudioPlay(canPlay);
+    });
+    return () => {
+      if (typeof unsub === 'function') unsub();
+    };
+  }, [transport]);
 
   // Statistics tracking
   const statsRef = useRef({
@@ -139,6 +156,28 @@ export function Dashboard({ onSessionEndedWithStats }) {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onEndSessionClick={() => setIsEndConfirmOpen(true)}
       />
+
+      {/* Start Audio button: shown only while room.canPlaybackAudio is false */}
+      {!canAudioPlay && (
+        <div className="bg-warning text-black px-4 py-2 flex items-center justify-between text-xs font-bold shadow-md flex-shrink-0">
+          <span>Audio output requires user gesture in this browser.</span>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={async () => {
+              if (transport?.startAudio) {
+                await transport.startAudio();
+                if (typeof transport.canPlaybackAudio === 'boolean') {
+                  setCanAudioPlay(transport.canPlaybackAudio);
+                }
+              }
+            }}
+            className="bg-black text-white hover:bg-neutral-800 text-xs py-1 px-3"
+          >
+            Start Audio
+          </Button>
+        </div>
+      )}
 
       {/* 2. Main Two-Column View (Strictly no scroll on 1366x768) */}
       <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 p-4 sm:p-5">

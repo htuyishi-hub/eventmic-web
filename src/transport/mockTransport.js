@@ -705,4 +705,16 @@ export class MockTransport {
       );
     } catch {}
   }
+
+  async setOutputDevice(deviceId) {
+    this.outputDeviceId = deviceId;
+  }
+
+  get canPlaybackAudio() {
+    return true;
+  }
+
+  async startAudio() {
+    return Promise.resolve();
+  }
 }

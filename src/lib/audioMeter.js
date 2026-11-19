@@ -17,8 +17,9 @@ export class AudioMeter {
    * Initializes audio meter with an existing MediaStream.
    * @param {MediaStream} stream 
    * @param {(level: number) => void} onLevel 
+   * @param {number} [pollIntervalMs=66] - Poll interval (~15 Hz = 66ms)
    */
-  start(stream, onLevel) {
+  start(stream, onLevel, pollIntervalMs = 66) {
     this.stop();
     this.mediaStream = stream;
     this.onLevelCallback = onLevel;
@@ -60,8 +61,8 @@ export class AudioMeter {
         }
       };
 
-      // Poll at ~100ms (10 times/second)
-      this.intervalId = setInterval(sample, 100);
+      // Poll at ~15 Hz (66ms)
+      this.intervalId = setInterval(sample, pollIntervalMs);
     } catch (err) {
       console.warn('[AudioMeter] Web Audio initialization failed:', err);
     }

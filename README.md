@@ -1,208 +1,189 @@
-# EventMic Web (Phase 1)
+# EventMic Web (Phase 1 & Phase 2: LiveKit Real Audio)
 
 **EventMic** turns attendees' smartphones into wireless stage Q&A microphones entirely in the browser. Zero native apps, zero friction.
 
-Phase 1 delivers the full host dashboard and attendee mobile experience powered by an in-browser `BroadcastChannel` mock transport. The application is architected so that all signaling and audio transport logic is decoupled behind a unified `TransportInterface`, preparing for a seamless drop-in replacement with `LiveKitTransport` in Phase 2.
+- **Phase 1**: In-browser `BroadcastChannel` mock transport for local offline multi-tab testing.
+- **Phase 2**: Real-time WebRTC audio streaming powered by **LiveKit Cloud** and `eventmic-server`. Attendees' smartphone microphones are captured, transmitted over WebRTC with speech-optimized Opus audio, and played directly through the host's mixing console or sound system.
 
 ---
 
-## Tech Stack
-
-- **Framework**: React 18, Vite 5, React Router v6
-- **Styling**: Tailwind CSS 3 (Dark theme with custom design tokens)
-- **Icons & QR**: Lucide React, `qrcode.react`
-- **State Management**: Native React Context & Reducers (`TransportContext`, `SessionContext`)
-- **Testing**: Vitest + Happy-DOM
-
----
-
-## Folder Structure
+## Architecture Overview
 
 ```
-src/
-├── App.jsx                     # Top-level Router & Providers
-├── main.jsx                    # React root entry point
-├── transport/
-│   ├── types.js                # JSDoc interface documentation
-│   ├── mockTransport.js        # BroadcastChannel tab-to-tab transport
-│   ├── livekitTransport.js     # Phase 2 LiveKit stub
-│   ├── mockTransport.test.js   # Vitest unit tests
-│   └── index.js                # Factory selecting transport via VITE_TRANSPORT
-├── context/
-│   ├── TransportContext.jsx    # Transport lifecycle & connection state
-│   └── SessionContext.jsx      # Reducer managing queue, floor, level, and events
-├── pages/
-│   ├── HomePage.jsx            # / landing page
-│   ├── HostPage.jsx            # /host dashboard route
-│   ├── JoinPage.jsx            # /join/:code attendee route
-│   └── NotFoundPage.jsx        # Catch-all 404 route
-├── components/
-│   ├── host/                   # PasscodeGate, CreateSession, Dashboard, SessionBar,
-│   │                           # QueueList, QueueItem, StageView, LevelMeter,
-│   │                           # RoomQrModal, EndSessionConfirm, SessionSummary,
-│   │                           # SettingsDrawer, ConnectionBadge
-│   ├── attendee/               # JoinScreen, ListeningScreen, HandRaisedScreen,
-│   │                           # OnAirScreen, EndedScreen, ErrorScreen
-│   └── ui/                     # Button, Modal, Drawer, Toast, Spinner, EmptyState
-├── lib/
-│   ├── ids.js                  # Unambiguous code generator (no 0, O, 1, I)
-│   ├── time.js                 # Duration & live wait time formatters
-│   └── audioMeter.js           # Web Audio AnalyserNode (real mic level 0..1)
-└── styles/
-    └── index.css               # Tailwind directives & CSS variables
+                      ┌──────────────────────┐
+                      │    LiveKit Cloud     │
+                      │ (SFU Media Server)   │
+                      └───────▲──────┬───────┘
+          Attendee Mic Track  │      │ Speaker Track Subscribed
+        (Opus speech 24kbps)  │      │ + Live Audio Level
+                              │      ▼
+      ┌─────────────────────────┐  ┌─────────────────────────┐
+      │   Phone (Attendee)      │  │   Laptop (Host Console) │
+      │  /join/:code            │  │  /host                  │
+      │                         │  │                         │
+      │  • Web Audio Mic        │  │  • StageView Meter      │
+      │  • Raise/Lower Intent   │  │  • Floor Grant / Revoke │
+      │  • In-Line Queue Pos    │  │  • Audio Output Routing │
+      └───────────┬─────────────┘  └───────────▲─────────────┘
+                  │                            │
+                  ▼                            │
+         ┌─────────────────────────────────────┴─────────────┐
+         │       eventmic-server (Node.js + Express)         │
+         │  • LiveKit Token Issuer (RoomAdmin / Attendee)    │
+         │  • Floor Permission & Track Mute Controller       │
+         │  • In-Memory Session Store & 200 Cap              │
+         └───────────────────────────────────────────────────┘
 ```
+
+The application strictly decouples signaling and audio behind the `TransportInterface` (`src/transport/types.js`), allowing instant switching between `mock` and `livekit` via `VITE_TRANSPORT`.
 
 ---
 
-## Installation & Running
+## Prerequisites & LiveKit Cloud Setup
+
+1. **Create a Free LiveKit Cloud Account**:
+   - Sign up at [cloud.livekit.io](https://cloud.livekit.io).
+   - Create a project (e.g., `eventmic-prod`).
+   - Go to **Project Settings &rarr; Keys** to generate an **API Key** and **API Secret**.
+   - Copy your WebSocket URL (`wss://<your-project>.livekit.cloud`).
+
+2. **Configure Server Environment (`eventmic-server/.env`)**:
+   ```bash
+   cd ../eventmic-server
+   cp .env.example .env
+   ```
+   Fill in your credentials:
+   ```env
+   LIVEKIT_URL=wss://your-project.livekit.cloud
+   LIVEKIT_API_KEY=your-api-key
+   LIVEKIT_API_SECRET=your-api-secret
+   HOST_PASSCODE=1234
+   PORT=3001
+   ```
+   > [!WARNING]
+   > Never commit `.env` or expose the API secret to frontend client bundles.
+
+3. **Configure Web Client (`eventmic-web/.env`)**:
+   ```bash
+   cd ../eventmic-web
+   cp .env.example .env
+   ```
+   Default settings:
+   ```env
+   VITE_TRANSPORT=livekit
+   VITE_API_BASE=/api
+   VITE_HOST_PASSCODE=1234
+   ```
+
+---
+
+## Running the Application
+
+### 1. Combined Development Mode (`dev:all`)
+
+Runs both the Express API backend (`port 3001`) and the Vite dev server (`port 5173`) concurrently:
 
 ```bash
-# Navigate to the project directory
 cd eventmic-web
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
+npm run dev:all
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Vite proxies `/api/*` requests to `http://localhost:3001`, so a single host or tunnel URL serves both the web frontend and API.
 
-To run the automated Vitest test suite:
+### 2. HTTPS Tunnel for Real Smartphone Testing
+
+Mobile browsers (iOS Safari, Android Chrome) strictly require **HTTPS** to allow microphone access (`getUserMedia`). When testing with real phones, expose the Vite port (`5173`) using a secure tunnel:
+
+**Using Cloudflare Tunnel (Recommended):**
 ```bash
-npm test
+cloudflared tunnel --url http://localhost:5173
 ```
 
-To create a production build:
+**Using Ngrok:**
 ```bash
-npm run build
+ngrok http 5173
 ```
 
----
-
-## Configuration
-
-Environment variables (configure via `.env` or `.env.example`):
-
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `VITE_TRANSPORT` | `mock` | Transport engine to use (`mock` or `livekit`). |
-| `VITE_HOST_PASSCODE` | `1234` | Security passcode required to unlock the `/host` dashboard. |
+1. Open the provided `https://...` tunnel URL on your laptop at `/host` (e.g. `https://random-name.trycloudflare.com/host`).
+2. Unlock the console using passcode `1234` and start a session.
+3. The on-screen QR code and **Copy Link** button dynamically use `window.location.origin`, pointing directly to the HTTPS tunnel URL.
+4. Scan the QR code with your smartphone to join as an attendee.
 
 ---
 
-## Manual Test Script (Multi-Tab Verification)
+## Latency Testing (Clap Test)
 
-Follow this 10-step protocol to verify all features in your browser:
+EventMic achieves ultra-low speech latency over LiveKit's SFU WebRTC pipeline. To measure real-world acoustic latency:
 
-1. **Host Unlock & Creation**:
-   - Open [http://localhost:5173/host](http://localhost:5173/host) in **Tab A**.
-   - Enter passcode `1234` and tap **Unlock Console**.
-   - Enter a session title (e.g. `Keynote Q&A`) and click **Start session**.
-   - Confirm the session code (e.g., `7K2M9X`) and QR button appear on the top bar.
-
-2. **Attendee Join**:
-   - In **Tab B**, navigate to `http://localhost:5173/join/<CODE>`.
-   - In **Tab C**, navigate to `http://localhost:5173/join/<CODE>`.
-   - In Tab B, enter name `Alice` and click **Join Room**.
-   - In Tab C, enter name `Bob` and click **Join Room**.
-   - Both tabs now show the **Listening** state ("You're connected").
-   - Tab A's attendee badge in the header displays `2`.
-
-3. **Queue & FIFO Order**:
-   - In Tab B (Alice), tap **Raise Hand**.
-   - In Tab C (Bob), tap **Raise Hand** 2 seconds later.
-   - Verify Tab B displays `You are #1 in line`.
-   - Verify Tab C displays `You are #2 in line`.
-   - Verify Tab A's **Up Next** queue displays Alice at position 1 and Bob at position 2 with live-updating wait timers.
-
-4. **Granting the Floor & Audio Level**:
-   - In Tab A, click **Grant Next (G)** (or press keyboard shortcut `G`).
-   - Tab B automatically switches to **You're Live** and prompts for microphone permission.
-   - Speak into your microphone: verify the live audio meter on Tab B pulses and the host's **StageView** meter moves in sync.
-   - Verify Tab C stays in line at position #1.
-
-5. **One-Speaker Rule**:
-   - While Alice (Tab B) is live, in Tab A click **Grant** on Bob (Tab C).
-   - Verify Alice's mic stops immediately, returning to the Listening screen with a toast: *"The host ended your turn"*.
-   - Verify Bob (Tab C) becomes the active on-air speaker.
-
-6. **Microphone Permission Denied**:
-   - Open another tab, raise hand, grant it, and block/deny mic permission in browser permissions.
-   - Verify the **ErrorScreen** appears explaining how to unblock mic access with a **Try Again** button.
-
-7. **Auto-Removal on Tab Close**:
-   - Close Tab C.
-   - Within 8 seconds (heartbeat timeout), verify Tab C is automatically removed from the host's queue or active floor.
-
-8. **Host Refresh & Session Persistence**:
-   - In Tab A, refresh the page.
-   - Verify the session name, code, queue, and floor are restored seamlessly from `localStorage`.
-
-9. **End Session & Summary**:
-   - In Tab A, click **End Session** and confirm in the modal dialog.
-   - Verify attendee tabs immediately show the **EndedScreen** (*"This session has ended. Thank you."*).
-   - Verify Tab A displays the **SessionSummary** showing duration, speaker count, and total hands raised.
-
-10. **Edge Cases**:
-    - Navigate to `/join/ZZZZZZ` (non-existent code): verify the **Invalid Room Code** screen appears with an option to return home.
-    - Test mobile viewport (360x740): verify buttons are >= 56px, touch targets are comfortable, and safe-area margins are respected.
+1. Bring the attendee phone and the host laptop (with speakers active) into the same room.
+2. Grant the phone the floor.
+3. Perform a loud, sharp **clap** near the phone's microphone.
+4. Record both the original physical clap and the laptop speaker's playback on a third device (or audio editor like Audacity).
+5. Measure the delta between the two waveform transients:
+   - Typical local Wi-Fi / 5G latency: **60 ms – 140 ms**.
 
 ---
 
-## Transport Interface (`src/transport/types.js`)
+## 11-Step Manual Test Protocol
 
-All interactions outside `src/transport` rely solely on the following API:
+Follow this protocol to verify the complete Phase 2 real-audio workflow:
 
-```javascript
-// Methods
-createSession({ name })     // -> Promise<SessionInfo> (Host)
-endSession()                // -> Promise<void> (Host)
-connect({ role, code, name })// -> Promise<void>
-disconnect()                // -> Promise<void>
-raiseHand()                 // -> Promise<void> (Attendee)
-lowerHand()                 // -> Promise<void> (Attendee)
-grant(attendeeId)           // -> Promise<void> (Host)
-revoke(attendeeId)          // -> Promise<void> (Host)
-muteSpeaker(isMuted)        // -> Promise<void> (Host)
-sendLevel(level)            // -> Promise<void> (Attendee, 0..1, ~10x/sec)
-on(event, handler)          // -> () => unsubscribe()
-```
-
-### Events
-
-- `'queue'`: `[{ id, name, raisedAt }]`
-- `'floor'`: `{ id, name, startedAt } | null`
-- `'level'`: `number` (0..1)
-- `'session'`: `{ code, name, status, createdAt }`
-- `'connection'`: `'connecting' | 'connected' | 'reconnecting' | 'disconnected'`
-- `'error'`: `{ code: 'INVALID_CODE' | 'SESSION_ENDED' | 'FULL' | 'UNKNOWN', message }`
-- `'attendees'`: `{ count: number }`
-- `'self'`: `'listening' | 'hand_raised' | 'on_air'`
-
----
-
-## Future LiveKitTransport Integration (Phase 2)
-
-In Phase 2, `LiveKitTransport` replaces `MockTransport`:
-1. **Signaling**: LiveKit Room data messages (`room.localParticipant.publishData`) handle queueing, raise/lower intents, and floor grants.
-2. **Audio Track**: When granted, attendee publishes their WebRTC local microphone track (`room.localParticipant.setMicrophoneEnabled(true)`).
-3. **Sound Output**: The host tab subscribes to the active speaker's audio track and routes it directly to the designated venue output via Web Audio / `setSinkId`.
-4. Zero application UI or page changes are required—only switching `VITE_TRANSPORT=livekit` in `.env`.
+1. **Environment Setup**:
+   Fill `eventmic-server/.env` with your LiveKit credentials. In `eventmic-web`, run:
+   ```bash
+   npm run dev:all
+   ```
+2. **Host Launch & Audio Unlock**:
+   Start a Cloudflare or Ngrok HTTPS tunnel to `http://localhost:5173`. Open the HTTPS tunnel URL on your laptop at `/host`. Enter passcode `1234`, click **Unlock Console**, enter a session name (e.g., `All-Hands Q&A`), and click **Start session**. If prompted, click **Start audio** to permit audio output.
+3. **Attendee Mobile Join**:
+   Scan the host's on-screen QR code with a real smartphone. Enter a name (e.g., `Sarah`) and tap **Join Room**. The phone confirms: *"You're connected"*.
+4. **Raise Hand**:
+   Tap **Raise Hand** on the phone. Verify the host console's **Up Next** queue updates immediately showing Sarah with a live wait timer. The phone displays: *"You are #1 in line"*.
+5. **Grant Floor & Real Audio**:
+   On the host console, click **Grant Next (G)**. The phone automatically transitions to the red **You're Live** screen and prompts for microphone access. Allow microphone permission and speak into the phone: verify audio plays through the laptop speakers in real time and the host's **StageView** level meter pulses in sync.
+6. **Mute & Floor Revocation**:
+   On the host console, press **M** (or tap **Mute Speaker**): verify the laptop audio mutes instantly. Click **End Speaker** (or press **Esc**): verify the phone returns to the listening screen with a notification.
+7. **One-Speaker Rule & Preemption**:
+   Join a second phone or browser tab (e.g., `Alex`). Raise hands on both. Grant Sarah. While Sarah is speaking live, grant Alex. Verify Sarah's microphone cuts immediately, returning her to the listening screen, while Alex becomes the sole active on-air speaker.
+8. **Screen Lock Behavior**:
+   While live on-air, lock the phone's screen. Due to mobile operating system power management, background tabs may pause WebRTC tracks. When unlocked, the tab automatically resumes without dropping the session.
+9. **Network Interruption (Wi-Fi Dropout)**:
+   While connected as an attendee, toggle airplane mode on the phone for 10 seconds, then re-enable connectivity. Observe the top yellow warning banner: *"Reconnecting to host..."*. LiveKit automatically re-establishes the ICE connection and returns to *"connected"*.
+10. **End Session**:
+    On the host console, click **End Session** and confirm. Verify all connected attendee phones immediately transition to the **Session Ended** screen. The host console displays the **SessionSummary** with duration, speaker count, and total hands raised.
+11. **Measure Latency (Clap Test)**:
+    Perform the clap test described above and verify latency is under 150 ms.
 
 ---
 
 ## Known Limitations and Deviations
 
-1. **Same-Origin Mock Transport Scope**:
-   - Phase 1 relies on the browser's native `BroadcastChannel` API to allow complete zero-configuration testing across multiple browser tabs without requiring external servers or API keys. Because `BroadcastChannel` is scoped to the same origin (`localhost:5173`), testing across separate physical devices requires Phase 2's `LiveKitTransport`.
-2. **Audio Data in Phase 1 vs Phase 2**:
-   - Attendees granted the floor have their real local microphone input analyzed in real time via Web Audio `AnalyserNode`, sending live numerical audio levels (0..1 at ~10 Hz) to drive the host and attendee visual meters. Raw audio waveforms are not broadcasted over the mock channel to prevent memory and event loop saturation; actual audio streaming is handled by WebRTC in Phase 2.
-3. **Audio Output Device Selection (`setSinkId`)**:
-   - The output device selector relies on `HTMLMediaElement.setSinkId` and `AudioContext.setSinkId`. While supported in Chromium browsers (Chrome, Edge, Brave), Safari and Firefox do not currently support custom sink routing. On unsupported browsers, the device selector gracefully hides, defaulting to system audio output, while test tone playback remains fully functional.
-4. **Inactive Tab Throttling**:
-   - Modern browsers throttle background tab timers (`setInterval`) down to 1s or coarser intervals. The mock transport's 3-second heartbeat and 8-second timeout are tuned to prevent false disconnects, but keeping the host dashboard visible in an active window provides the most responsive experience.
-5. **Attendee Capacity**:
-   - Mock transport enforces an upper limit of 200 concurrent attendees per room (`code: 'FULL'`), returning an explicit capacity error screen with retry controls for any subsequent participants.
+1. **Browser Autoplay & Audio Output**:
+   - Modern browsers (Chrome, Safari) block unprompted Web Audio playback without a prior user gesture. If the host opens the dashboard without interacting with the page, audio output may be suspended until the host clicks the prominent **Start Audio** button.
+2. **Mobile Background Audio & Screen Lock**:
+   - Web browsers on mobile devices (iOS Safari in particular) pause `getUserMedia` microphone tracks and throttle WebRTC background threads when the screen is locked or the browser is minimized. When the screen is unlocked, tracks resume automatically.
+3. **Audio Output Routing (`setSinkId`)**:
+   - Custom audio output selection is supported in Chromium-based browsers (Chrome, Edge, Brave). In Safari and Firefox, the selector gracefully hides and routes audio to the system's default output.
+4. **Session Participant Cap**:
+   - The server enforces an upper limit of 200 concurrent attendees per room (`409 FULL`) to protect SFU bandwidth.
+5. **Timing-Safe Authentication**:
+   - All host endpoints enforce timing-safe comparison on the `x-host-passcode` header using `crypto.timingSafeEqual` to prevent timing attacks.
 
+---
+
+## Automated Tests
+
+Both projects feature comprehensive test suites:
+
+```bash
+# Run server integration tests (Supertest + Vitest)
+cd eventmic-server
+npm test
+
+# Run web unit & transport tests (Vitest + Happy-DOM)
+cd ../eventmic-web
+npm test
+
+# Verify production build
+npm run build
+```
