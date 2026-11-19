@@ -1,18 +1,13 @@
 /**
  * EventMic Host Audio Engine.
- * Manages Web Audio processing graph, filtering, gate, limiter, routing, and meters.
+ * Manages Web Audio processing graph, per-source chains, limiter, routing, and meters.
  */
-
 import { getAudioCapabilities } from './audioCapabilities.js';
 import { connectRouting, loadSavedRouting, saveRouting } from './audioRouting.js';
-import {
-  enumerateOutputDevices,
-  saveActiveDevice,
-  isDeviceUnplugged,
-  listenDeviceChanges
-} from './audioDevices.js';
+import { enumerateOutputDevices, saveActiveDevice, isDeviceUnplugged, listenDeviceChanges } from './audioDevices.js';
 import { play1kHzTone } from './audioTone.js';
 import { buildAudioGraph, computeRmsLevel } from './audioGraph.js';
+import { SourceChainManager } from './sourceChains.js';
 
 export class HostAudioEngine {
   constructor() {
@@ -21,7 +16,7 @@ export class HostAudioEngine {
     this.currentStream = null;
     this.chromeWorkaroundAudio = null;
     this.g = null;
-
+    this.sourceManager = null;
     this.volume = 1.0;
     this.isMuted = false;
     this.highPassConfig = { enabled: true, hz: 80 };
@@ -58,21 +53,19 @@ export class HostAudioEngine {
       document.body.appendChild(this.chromeWorkaroundAudio);
     }
     this.g = buildAudioGraph(this.ctx, {
-      highPass: this.highPassConfig,
-      gate: this.gateConfig,
-      limiterEnabled: this.limiterEnabled,
-      volume: this.volume,
-      isMuted: this.isMuted,
-      routing: this.routingConfig
+      highPass: this.highPassConfig, gate: this.gateConfig, limiterEnabled: this.limiterEnabled,
+      volume: this.volume, isMuted: this.isMuted, routing: this.routingConfig
     });
+    this.sourceManager = new SourceChainManager(this.ctx, this.g.volumeGain);
     return this.ctx;
   }
 
-  attachStream(stream) {
+  attachStream(stream, role = 'attendee') {
     if (!stream) {
       if (this.sourceNode) { try { this.sourceNode.disconnect(); } catch {} this.sourceNode = null; }
       if (this.chromeWorkaroundAudio) this.chromeWorkaroundAudio.srcObject = null;
       this.currentStream = null;
+      this.sourceManager?.attach(role, null);
       return;
     }
     this.ensureContext();
@@ -85,7 +78,11 @@ export class HostAudioEngine {
     this.sourceNode = this.ctx.createMediaStreamSource(stream);
     this.sourceNode.connect(this.g.inputAnalyser);
     this.sourceNode.connect(this.g.highPassFilter);
+    this.sourceManager.attach(role, stream);
   }
+
+  duckStage(duck, factor = 0.3) { this.sourceManager?.duckStage(duck, factor); }
+  muteSource(role, muted) { this.sourceManager?.muteSource(role, muted); }
 
   async setOutputDevice(id) {
     this.activeDeviceId = id || '';
@@ -99,9 +96,7 @@ export class HostAudioEngine {
 
   setVolume(vol) {
     this.volume = Math.max(0, Math.min(2, Number(vol) || 0));
-    if (this.g?.volumeGain && this.ctx) {
-      this.g.volumeGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
-    }
+    if (this.g?.volumeGain && this.ctx) this.g.volumeGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
   }
 
   setMuted(muted) {
@@ -162,7 +157,8 @@ export class HostAudioEngine {
       in: Number(inLvl.toFixed(3)),
       out: Number(outLvl.toFixed(3)),
       clipping: outLvl >= 0.89,
-      limiterActive: typeof reduction === 'number' && reduction < -0.5
+      limiterActive: typeof reduction === 'number' && reduction < -0.5,
+      sources: this.sourceManager ? this.sourceManager.getLevels() : {}
     };
   }
 
@@ -190,6 +186,7 @@ export class HostAudioEngine {
   dispose() {
     this._unsubDeviceChange?.();
     this.attachStream(null);
+    this.sourceManager?.dispose();
     this.chromeWorkaroundAudio?.remove();
     this.g?.outputAudioEl?.remove();
     if (this.ctx && this.ctx.state !== 'closed') this.ctx.close().catch(() => {});

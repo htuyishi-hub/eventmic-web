@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Radio, Square } from 'lucide-react';
+import { Mic, Radio, Square, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 import { LevelMeter } from '../host/LevelMeter.jsx';
 import { AudioMeter } from '../../lib/audioMeter.js';
@@ -9,7 +9,8 @@ export function OnAirScreen({
   session,
   onStopSpeaking,
   onMicError,
-  sendLevel
+  sendLevel,
+  capSeconds = 120
 }) {
   const [level, setLevel] = useState(0);
   const [speakingSeconds, setSpeakingSeconds] = useState(0);
@@ -18,14 +19,11 @@ export function OnAirScreen({
   const audioMeterRef = useRef(null);
   const wakeLockRef = useRef(null);
 
-  // 1. Microphone capture and level sampling
   useEffect(() => {
     let isCancelled = false;
 
     async function initMic() {
       try {
-        console.log('[OnAir] In mock mode: Web Audio level meter active, no audio leaves the device.');
-
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -41,35 +39,24 @@ export function OnAirScreen({
         }
 
         streamRef.current = stream;
-
-        // Start AudioMeter
         const meter = new AudioMeter();
         audioMeterRef.current = meter;
-
         meter.start(stream, (lvl) => {
           setLevel(lvl);
-          if (sendLevel) {
-            sendLevel(lvl);
-          }
+          if (sendLevel) sendLevel(lvl);
         });
       } catch (err) {
-        console.error('[OnAir] Microphone permission denied or unavailable:', err);
-        if (onMicError) {
-          onMicError(err);
-        }
+        console.error('[OnAir] Mic error:', err);
+        if (onMicError) onMicError(err);
       }
     }
 
     initMic();
 
-    // 2. Request Screen Wake Lock while on air
     if ('wakeLock' in navigator) {
-      navigator.wakeLock.request('screen').then((lock) => {
-        wakeLockRef.current = lock;
-      }).catch(() => {});
+      navigator.wakeLock.request('screen').then(lock => { wakeLockRef.current = lock; }).catch(() => {});
     }
 
-    // 3. Speaking duration timer
     const startTime = Date.now();
     const timerInterval = setInterval(() => {
       setSpeakingSeconds(Math.floor((Date.now() - startTime) / 1000));
@@ -78,42 +65,40 @@ export function OnAirScreen({
     return () => {
       isCancelled = true;
       clearInterval(timerInterval);
-
-      // Clean up audio meter
-      if (audioMeterRef.current) {
-        audioMeterRef.current.stop();
-        audioMeterRef.current = null;
-      }
-
-      // Stop mic tracks
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-        streamRef.current = null;
-      }
-
-      // Release wake lock
-      if (wakeLockRef.current) {
-        wakeLockRef.current.release().catch(() => {});
-        wakeLockRef.current = null;
-      }
+      if (audioMeterRef.current) audioMeterRef.current.stop();
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      if (wakeLockRef.current) wakeLockRef.current.release().catch(() => {});
     };
   }, [sendLevel, onMicError]);
+
+  const remainingSeconds = Math.max(0, capSeconds - speakingSeconds);
+  const isWarning = remainingSeconds <= 15;
 
   return (
     <div className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto bg-background text-foreground">
       {/* Top Status */}
       <div className="pt-8 text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-live/20 border border-live text-live text-xs font-black uppercase tracking-widest shadow-lg shadow-live/25 animate-pulse">
-          <Radio size={16} />
-          <span>You're Live</span>
+        <div className="flex items-center justify-center gap-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-live/20 border border-live text-live text-xs font-black uppercase tracking-widest shadow-lg shadow-live/25 animate-pulse">
+            <Radio size={16} />
+            <span>You're Live</span>
+          </div>
+
+          {isWarning && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500 text-amber-300 text-xs font-black uppercase tracking-wider animate-bounce">
+              <AlertTriangle size={14} />
+              <span>{remainingSeconds}s left</span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1">
           <h1 className="text-xl font-bold text-white tracking-tight">
             {session?.name || 'Live Stage'}
           </h1>
-          <div className="text-3xl font-black font-mono text-white tracking-wider tabular-nums">
-            {formatDuration(speakingSeconds)}
+          <div className="flex items-center justify-center gap-3 font-mono text-white tabular-nums">
+            <span className="text-3xl font-black">{formatDuration(speakingSeconds)}</span>
+            <span className="text-xs text-muted">/ {formatDuration(capSeconds)} max</span>
           </div>
         </div>
 

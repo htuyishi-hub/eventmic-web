@@ -11,25 +11,19 @@ import { StageView } from './StageView.jsx';
 import { RoomQrModal } from './RoomQrModal.jsx';
 import { EndSessionConfirm } from './EndSessionConfirm.jsx';
 import { SettingsDrawer } from './SettingsDrawer.jsx';
+import { SessionMetricsBar } from '../admin/SessionMetricsBar.jsx';
+import { SourceMetersCard } from '../admin/SourceMetersCard.jsx';
 import { Toast } from '../ui/Toast.jsx';
 import { Button } from '../ui/Button.jsx';
 
 export function Dashboard({ onSessionEndedWithStats }) {
   const {
-    session,
-    queue,
-    floor,
-    level,
-    attendeeCount,
-    isMuted,
-    grant,
-    revoke,
-    muteSpeaker,
-    endSession
+    session, queue, floor, level, attendeeCount, isMuted,
+    grant, revoke, muteSpeaker, endSession, principalQueue,
+    allowPrincipal, metrics
   } = useSession();
 
   const { connectionState, transport } = useTransport();
-
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
@@ -37,34 +31,20 @@ export function Dashboard({ onSessionEndedWithStats }) {
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(0);
 
   const {
-    audioEngine,
-    audioDevices,
-    activeDeviceId,
-    activeDeviceLabel,
-    unpluggedWarning,
-    dismissUnpluggedWarning,
-    selectOutputDevice,
-    refreshDevices,
-    attachMicStream,
-    volume,
-    setVolume,
-    liveLevels,
-    isClipping,
-    isContextSuspended,
-    resumeAudio
+    audioEngine, audioDevices, activeDeviceId, activeDeviceLabel,
+    unpluggedWarning, dismissUnpluggedWarning, selectOutputDevice,
+    refreshDevices, attachMicStream, muteSource, volume, setVolume,
+    liveLevels, isClipping, isContextSuspended, resumeAudio
   } = useHostAudio(transport, floor, isMuted, setToastMessage);
 
   const { getFinalStats } = useSessionStats(session, floor, queue);
 
   useHostShortcuts({
-    queue, floor, isMuted,
-    isQrOpen, setIsQrOpen,
-    isSettingsOpen, setIsSettingsOpen,
-    isEndConfirmOpen, setIsEndConfirmOpen,
+    queue, floor, isMuted, isQrOpen, setIsQrOpen, isSettingsOpen,
+    setIsSettingsOpen, isEndConfirmOpen, setIsEndConfirmOpen,
     grant, revoke, muteSpeaker
   });
 
-  // Speaking time limit auto-revoke
   useEffect(() => {
     if (!timeLimitMinutes || !floor?.startedAt) return;
     const limitMs = timeLimitMinutes * 60 * 1000;
@@ -90,11 +70,8 @@ export function Dashboard({ onSessionEndedWithStats }) {
   return (
     <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden">
       <SessionBar
-        session={session}
-        attendeeCount={attendeeCount}
-        connectionState={connectionState}
-        onOpenQr={() => setIsQrOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        session={session} attendeeCount={attendeeCount} connectionState={connectionState}
+        onOpenQr={() => setIsQrOpen(true)} onOpenSettings={() => setIsSettingsOpen(true)}
         onEndSessionClick={() => setIsEndConfirmOpen(true)}
       />
 
@@ -119,25 +96,27 @@ export function Dashboard({ onSessionEndedWithStats }) {
         </div>
       )}
 
-      <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 p-4 sm:p-5">
-        <section className="md:col-span-5 lg:col-span-4 h-full min-h-0">
-          <AdminTabs queue={queue} onGrant={grant} onDrop={revoke} onOpenQr={() => setIsQrOpen(true)} />
+      <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 p-4 sm:p-5 overflow-hidden">
+        <section className="md:col-span-5 lg:col-span-4 h-full min-h-0 flex flex-col gap-3 overflow-y-auto pr-1">
+          <SessionMetricsBar
+            metrics={metrics || session?.metrics}
+            floor={floor}
+            principalQueue={principalQueue}
+            onHandoverNext={(id) => allowPrincipal(id)}
+          />
+          <SourceMetersCard liveLevels={liveLevels} onMuteSource={muteSource} />
+          <div className="flex-1 min-h-[300px]">
+            <AdminTabs queue={queue} onGrant={grant} onDrop={revoke} onOpenQr={() => setIsQrOpen(true)} />
+          </div>
         </section>
 
         <section className="md:col-span-7 lg:col-span-8 h-full min-h-0">
           <StageView
-            floor={floor}
-            inputLevel={inputMeterLevel}
-            outputLevel={outputMeterLevel}
-            isMuted={isMuted}
-            volume={volume}
-            onVolumeChange={setVolume}
-            isClipping={isClipping}
-            isLimiterActive={liveLevels.limiterActive}
-            onEndSpeaker={() => revoke(floor?.id)}
-            onToggleMute={() => muteSpeaker(!isMuted)}
-            queueLength={queue.length}
-            onGrantNext={() => queue[0] && grant(queue[0].id)}
+            floor={floor} inputLevel={inputMeterLevel} outputLevel={outputMeterLevel}
+            isMuted={isMuted} volume={volume} onVolumeChange={setVolume}
+            isClipping={isClipping} isLimiterActive={liveLevels.limiterActive}
+            onEndSpeaker={() => revoke(floor?.id)} onToggleMute={() => muteSpeaker(!isMuted)}
+            queueLength={queue.length} onGrantNext={() => queue[0] && grant(queue[0].id)}
             nextAttendeeName={queue[0]?.name}
           />
         </section>
@@ -151,12 +130,7 @@ export function Dashboard({ onSessionEndedWithStats }) {
           <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">Esc</kbd> End</span>
           <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">Q</kbd> QR</span>
         </div>
-
-        <div
-          onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center gap-1.5 font-mono text-[10px] cursor-pointer hover:text-white transition-colors"
-          title="Click to change audio output routing"
-        >
+        <div onClick={() => setIsSettingsOpen(true)} className="flex items-center gap-1.5 font-mono text-[10px] cursor-pointer hover:text-white transition-colors">
           <Volume2 size={12} className="text-accent" />
           <span className="truncate max-w-[220px]">Output: {activeDeviceLabel}</span>
         </div>
@@ -164,17 +138,11 @@ export function Dashboard({ onSessionEndedWithStats }) {
 
       <RoomQrModal isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} code={session?.code} sessionName={session?.name} />
       <SettingsDrawer
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        timeLimitMinutes={timeLimitMinutes}
-        onTimeLimitChange={setTimeLimitMinutes}
-        audioEngine={audioEngine}
-        liveLevels={liveLevels}
-        audioDevices={audioDevices}
-        activeDeviceId={activeDeviceId}
-        onSelectDevice={selectOutputDevice}
-        onRefreshDevices={refreshDevices}
-        onAttachMicStream={attachMicStream}
+        isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}
+        timeLimitMinutes={timeLimitMinutes} onTimeLimitChange={setTimeLimitMinutes}
+        audioEngine={audioEngine} liveLevels={liveLevels} audioDevices={audioDevices}
+        activeDeviceId={activeDeviceId} onSelectDevice={selectOutputDevice}
+        onRefreshDevices={refreshDevices} onAttachMicStream={attachMicStream}
       />
       <EndSessionConfirm isOpen={isEndConfirmOpen} onClose={() => setIsEndConfirmOpen(false)} onConfirm={handleEndSessionConfirmed} sessionName={session?.name} />
       {toastMessage && <Toast message={toastMessage} type="warning" onClose={() => setToastMessage('')} />}

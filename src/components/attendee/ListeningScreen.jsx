@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Hand, Radio, ShieldCheck } from 'lucide-react';
+import { Hand, Radio, ShieldCheck, Zap } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 
 const REASONS = [
@@ -9,7 +9,7 @@ const REASONS = [
   { id: 'clarification', label: 'Clarification' }
 ];
 
-export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
+export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }) {
   const [selectedReason, setSelectedReason] = useState('question');
 
   return (
@@ -37,9 +37,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
           </div>
 
           <div className="space-y-1 text-center">
-            <h3 className="text-base font-bold text-white">
-              Stage Audio Reinforced
-            </h3>
+            <h3 className="text-base font-bold text-white">Stage Audio Reinforced</h3>
             <p className="text-xs text-muted leading-relaxed">
               Listen to the live presentation. Choose your reason and tap Raise Hand below to join the queue.
             </p>
@@ -49,7 +47,6 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
 
       {/* Bottom Action Area */}
       <div className="space-y-3 pb-safe">
-        {/* Reason Selector Chips */}
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-muted text-center mb-2">
             Reason for Speaking
@@ -84,6 +81,18 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand }) {
           <Hand size={24} />
           <span>Raise Hand</span>
         </Button>
+
+        {onUrgent && (
+          <Button
+            size="md"
+            variant="secondary"
+            onClick={onUrgent}
+            className="w-full gap-2 text-xs font-bold uppercase tracking-wider text-amber-300 border-amber-500/30 hover:bg-amber-500/10"
+          >
+            <Zap size={14} className="text-amber-400" />
+            <span>Urgent (5s Blip)</span>
+          </Button>
+        )}
 
         <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted text-center">
           <ShieldCheck size={14} className="text-accent flex-shrink-0" />

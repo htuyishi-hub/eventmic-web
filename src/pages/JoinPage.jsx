@@ -20,28 +20,15 @@ export function JoinPage() {
   const code = (rawCode || '').trim().toUpperCase();
 
   const {
-    session,
-    queue,
-    floor,
-    selfState,
-    error,
-    preemptedMessage,
-    clearPreempted,
-    connect,
-    raiseHand,
-    lowerHand,
-    sendLevel,
-    clearError
+    session, queue, floor, selfState, error, preemptedMessage,
+    clearPreempted, connect, raiseHand, lowerHand, urgentRequest,
+    sendLevel, clearError
   } = useSession();
 
   const { connectionState } = useTransport();
   const [hasJoined, setHasJoined] = useState(false);
   const [attendeeName, setAttendeeName] = useState(() => {
-    try {
-      return localStorage.getItem(NAME_STORAGE_KEY) || '';
-    } catch {
-      return '';
-    }
+    try { return localStorage.getItem(NAME_STORAGE_KEY) || ''; } catch { return ''; }
   });
 
   const [toastMessage, setToastMessage] = useState('');
@@ -53,11 +40,7 @@ export function JoinPage() {
 
   useEffect(() => {
     if (!isCodeFormatValid) return;
-    connect({
-      role: 'attendee',
-      code,
-      name: attendeeName || 'Attendee'
-    });
+    connect({ role: 'attendee', code, name: attendeeName || 'Attendee' });
   }, [code, isCodeFormatValid, connect]);
 
   useEffect(() => {
@@ -73,35 +56,22 @@ export function JoinPage() {
   const handleJoinSubmit = async (enteredName) => {
     setAttendeeName(enteredName);
     setHasJoined(true);
-    await connect({
-      role: 'attendee',
-      code,
-      name: enteredName
-    });
+    await connect({ role: 'attendee', code, name: enteredName });
   };
 
   const handleRetry = () => {
     clearError();
     setMicDeniedError(false);
-    connect({
-      role: 'attendee',
-      code,
-      name: attendeeName || 'Attendee'
-    });
+    connect({ role: 'attendee', code, name: attendeeName || 'Attendee' });
   };
 
-  if (!isCodeFormatValid) {
-    return <ErrorScreen variant="INVALID_CODE" onBack={() => navigate('/')} />;
-  }
+  if (!isCodeFormatValid) return <ErrorScreen variant="INVALID_CODE" onBack={() => navigate('/')} />;
 
   if (micDeniedError) {
     return (
       <ErrorScreen
         variant="MIC_DENIED"
-        onRetry={() => {
-          setMicDeniedError(false);
-          lowerHand();
-        }}
+        onRetry={() => { setMicDeniedError(false); lowerHand(); }}
         onBack={() => navigate('/')}
       />
     );
@@ -118,13 +88,8 @@ export function JoinPage() {
     );
   }
 
-  if (session?.status === 'ended') {
-    return <EndedScreen session={session} />;
-  }
-
-  if (!hasJoined) {
-    return <JoinScreen session={session} initialCode={code} onJoin={handleJoinSubmit} />;
-  }
+  if (session?.status === 'ended') return <EndedScreen session={session} />;
+  if (!hasJoined) return <JoinScreen session={session} initialCode={code} onJoin={handleJoinSubmit} />;
 
   const queuedItem = queue.find(item => item.id === myId);
   const queueIndex = queue.findIndex(item => item.id === myId);
@@ -140,7 +105,13 @@ export function JoinPage() {
         </div>
       )}
 
-      {selfState === 'on_air' ? (
+      {selfState === 'preparing' ? (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
+          <Spinner size="lg" className="border-t-accent" />
+          <h2 className="text-xl font-bold text-white">Preparing your microphone...</h2>
+          <p className="text-xs text-muted max-w-xs">Connecting to venue audio. You will be live in a moment.</p>
+        </div>
+      ) : selfState === 'on_air' ? (
         <OnAirScreen
           session={session}
           onStopSpeaking={() => lowerHand()}
@@ -159,6 +130,7 @@ export function JoinPage() {
           session={session}
           attendeeName={attendeeName}
           onRaiseHand={raiseHand}
+          onUrgent={urgentRequest}
         />
       )}
 

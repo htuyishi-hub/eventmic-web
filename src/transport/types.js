@@ -1,7 +1,7 @@
 /**
  * @typedef {'admin' | 'principal' | 'attendee' | 'host'} Role
  * @typedef {'connecting' | 'connected' | 'reconnecting' | 'disconnected'} ConnectionState
- * @typedef {'listening' | 'hand_raised' | 'on_air'} AttendeeSelfState
+ * @typedef {'listening' | 'hand_raised' | 'preparing' | 'on_air'} AttendeeSelfState
  * @typedef {'live' | 'ended'} SessionStatus
  * @typedef {'INVALID_CODE' | 'SESSION_ENDED' | 'FULL' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'UNKNOWN'} ErrorCode
  * @typedef {'question' | 'comment' | 'compliment' | 'clarification'} HandReason

@@ -23,15 +23,16 @@ export function SpeakerFloorCard({
     }`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             {isOnFloor ? (
-              <span className="flex items-center gap-1.5 text-live text-xs font-black uppercase tracking-wider">
-                <Radio size={16} className="animate-pulse" />
-                You Have The Floor (On Air)
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-live text-white text-xs font-black uppercase tracking-wider shadow-md shadow-live/40 animate-pulse">
+                <Radio size={14} />
+                YOU ARE LIVE
               </span>
             ) : (
-              <span className="text-xs font-semibold text-muted uppercase tracking-wider">
-                Current Speaker
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-background border border-border text-muted text-xs font-black uppercase tracking-wider">
+                <MicOff size={14} />
+                YOU ARE MUTED
               </span>
             )}
           </div>

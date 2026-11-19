@@ -1,25 +1,17 @@
 import React, { useState } from 'react';
-import { Users, Mic, LogOut } from 'lucide-react';
+import { Users, Mic, LogOut, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../context/SessionContext.jsx';
 import { useTransport } from '../../context/TransportContext.jsx';
 import { ReasonBadge } from '../admin/ReasonBadge.jsx';
 import { Button } from '../ui/Button.jsx';
 import { ConnectionBadge } from '../host/ConnectionBadge.jsx';
 import { SpeakerFloorCard } from './SpeakerFloorCard.jsx';
+import { SpeakerAudioPanel } from './SpeakerAudioPanel.jsx';
 
 export function SpeakerDashboard({ onExit }) {
   const {
-    session,
-    floor,
-    queue,
-    selfState,
-    principalQueue,
-    takeFloor,
-    requestSpeak,
-    allowPrincipal,
-    grant,
-    revoke,
-    disconnect
+    session, floor, queue, selfState, principalQueue,
+    takeFloor, requestSpeak, allowPrincipal, grant, revoke, disconnect
   } = useSession();
 
   const { connectionState, transport } = useTransport();
@@ -83,12 +75,21 @@ export function SpeakerDashboard({ onExit }) {
         </div>
       </header>
 
+      {connectionState !== 'connected' && (
+        <div className="p-3 rounded-xl bg-live/15 text-live text-xs border border-live/30 flex items-center gap-2">
+          <AlertTriangle size={16} />
+          <span>Connection is {connectionState}. Trying to reconnect...</span>
+        </div>
+      )}
+
       {actionError && (
         <div className="p-3 rounded-xl bg-live/15 text-live text-xs border border-live/30 flex items-center justify-between">
           <span>{actionError}</span>
           <button onClick={() => setActionError('')} className="font-bold underline text-xs">Dismiss</button>
         </div>
       )}
+
+      <SpeakerAudioPanel transport={transport} isOnFloor={isOnFloor} />
 
       <SpeakerFloorCard
         floor={floor}
@@ -134,9 +135,7 @@ export function SpeakerDashboard({ onExit }) {
                       <span className="text-xs font-bold text-white truncate max-w-[120px]">{att.name}</span>
                       <ReasonBadge reason={att.reason || 'question'} />
                       {att.hasNotSpoken && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-live/20 text-live border border-live/30">
-                          1st
-                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-live/20 text-live border border-live/30">1st</span>
                       )}
                     </div>
                     {att.speakCount !== undefined && (

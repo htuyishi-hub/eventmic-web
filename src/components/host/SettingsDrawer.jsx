@@ -7,6 +7,7 @@ import { ProcessingSection } from './settings/ProcessingSection.jsx';
 import { TestToolsSection } from './settings/TestToolsSection.jsx';
 import { CapabilitiesSection } from './settings/CapabilitiesSection.jsx';
 import { FairModeSection } from '../admin/FairModeSection.jsx';
+import { ConnectModeSection } from './settings/ConnectModeSection.jsx';
 import { useTransport } from '../../context/TransportContext.jsx';
 
 export function SettingsDrawer({
@@ -64,7 +65,6 @@ export function SettingsDrawer({
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Host Audio & Console Settings" width="max-w-lg">
       <div className="space-y-6 pb-6">
-        {/* 1. Audio Output Device */}
         <OutputDeviceSection
           audioDevices={audioDevices}
           activeDeviceId={activeDeviceId}
@@ -72,20 +72,14 @@ export function SettingsDrawer({
           sinkIdSupported={capabilities.sinkIdSupported ?? true}
           onDevicesRefreshed={onRefreshDevices}
         />
-
         <hr className="border-border" />
-
-        {/* 2. Channel Routing */}
         <ChannelRoutingSection
           routingConfig={routingConfig}
           onChangeRouting={handleRoutingChange}
           maxChannelCount={capabilities.maxChannelCount || 2}
           multiChannelSupported={capabilities.multiChannelSupported || false}
         />
-
         <hr className="border-border" />
-
-        {/* 3. Audio DSP & Processing */}
         <ProcessingSection
           highPass={highPassConfig}
           onChangeHighPass={handleHighPassChange}
@@ -94,10 +88,7 @@ export function SettingsDrawer({
           limiterEnabled={limiterEnabled}
           onChangeLimiter={handleLimiterChange}
         />
-
         <hr className="border-border" />
-
-        {/* 4. Hardware Test Tools */}
         <TestToolsSection
           onPlayTone={(kind) => audioEngine?.playTestTone(kind)}
           maxChannelCount={capabilities.maxChannelCount || 2}
@@ -105,15 +96,9 @@ export function SettingsDrawer({
           isTestingMic={isTestingMic}
           setIsTestingMic={setIsTestingMic}
         />
-
         <hr className="border-border" />
-
-        {/* 5. Capabilities Panel & Live Meters */}
         <CapabilitiesSection capabilities={capabilities} liveLevels={liveLevels} />
-
         <hr className="border-border" />
-
-        {/* 6. Speaking Time Limit Option */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
             <Clock size={16} className="text-accent" />
@@ -137,11 +122,11 @@ export function SettingsDrawer({
             ))}
           </div>
         </div>
-
-        {/* Fair Mode Settings */}
+        <hr className="border-border" />
         <FairModeSection />
-
-        {/* 7. Transport Architecture Info */}
+        <hr className="border-border" />
+        <ConnectModeSection />
+        <hr className="border-border" />
         <div className="p-4 bg-background border border-border rounded-xl space-y-1.5 text-xs text-muted">
           <div className="flex items-center gap-1.5 text-white font-bold">
             <Sparkles size={14} className="text-accent" />
