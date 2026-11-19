@@ -1,52 +1,46 @@
-import React, { useState } from 'react';
-import { Users, History, Shield, ListOrdered, Scale } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, History, Shield, ListOrdered, Scale, Zap } from 'lucide-react';
 import { QueueList } from '../host/QueueList.jsx';
 import { AttendeesTab } from './AttendeesTab.jsx';
 import { SpokeHistoryTab } from './SpokeHistoryTab.jsx';
 import { PrincipalsTab } from './PrincipalsTab.jsx';
+import { UrgentTab } from './UrgentTab.jsx';
+import { Tabs } from '../common/Tabs.jsx';
 import { useSession } from '../../context/SessionContext.jsx';
 
-export function AdminTabs({ queue, onGrant, onDrop, onOpenQr }) {
+export function AdminTabs({ queue = [], onGrant, onDrop, onOpenQr }) {
   const [activeTab, setActiveTab] = useState('queue');
-  const { fairModeActive, attendeeCount, principals } = useSession();
+  const { fairModeActive, attendeeCount, principals, urgent = [] } = useSession();
 
-  const tabs = [
-    { id: 'queue', label: `Queue (${queue.length})`, icon: ListOrdered },
-    { id: 'attendees', label: `Attendees (${attendeeCount || 0})`, icon: Users },
-    { id: 'spoke', label: 'Spoke', icon: History },
-    { id: 'principals', label: `Speakers (${principals?.length || 0})`, icon: Shield }
+  const tabDefs = [
+    { id: 'queue', label: 'Queue', icon: ListOrdered, badge: queue.length, shortcut: '1' },
+    { id: 'urgent', label: 'Urgent', icon: Zap, badge: urgent.length, badgeVariant: 'urgent', shortcut: '2' },
+    { id: 'attendees', label: 'Attendees', icon: Users, badge: attendeeCount, shortcut: '3' },
+    { id: 'spoke', label: 'Spoke', icon: History, shortcut: '4' },
+    { id: 'principals', label: 'Speakers', icon: Shield, badge: principals?.length, shortcut: '5' }
   ];
+
+  // Tab number shortcuts (1-5)
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= tabDefs.length) {
+        setActiveTab(tabDefs[num - 1].id);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [tabDefs.length]);
 
   return (
     <div className="flex flex-col h-full bg-surface border border-border rounded-2xl overflow-hidden shadow-xl">
-      {/* Tab Navigation */}
-      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border bg-surface/90 flex-shrink-0">
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-                  isActive
-                    ? 'bg-accent text-white shadow-sm'
-                    : 'text-muted hover:text-white hover:bg-surface'
-                }`}
-              >
-                <Icon size={13} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
+      <div className="p-2 border-b border-border bg-surface/90 flex items-center justify-between gap-2 flex-shrink-0">
+        <Tabs tabs={tabDefs} activeTab={activeTab} onChange={setActiveTab} className="flex-1" />
         {fairModeActive && (
           <span
-            className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-live/15 text-live border border-live/30"
-            title="Fair Mode prioritizes attendees who have not spoken"
+            className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-live/15 text-live border border-live/30 flex-shrink-0"
+            title="Fair Mode prioritizes attendees who haven't spoken yet"
           >
             <Scale size={11} />
             <span>Fair Mode</span>
@@ -54,16 +48,9 @@ export function AdminTabs({ queue, onGrant, onDrop, onOpenQr }) {
         )}
       </div>
 
-      {/* Tab Body */}
       <div className="flex-1 min-h-0 p-3 sm:p-4 overflow-hidden">
-        {activeTab === 'queue' && (
-          <QueueList
-            queue={queue}
-            onGrant={onGrant}
-            onDrop={onDrop}
-            onOpenQr={onOpenQr}
-          />
-        )}
+        {activeTab === 'queue' && <QueueList queue={queue} onGrant={onGrant} onDrop={onDrop} onOpenQr={onOpenQr} />}
+        {activeTab === 'urgent' && <UrgentTab />}
         {activeTab === 'attendees' && <AttendeesTab />}
         {activeTab === 'spoke' && <SpokeHistoryTab />}
         {activeTab === 'principals' && <PrincipalsTab />}

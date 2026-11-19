@@ -9,6 +9,7 @@ import { HandRaisedScreen } from '../components/attendee/HandRaisedScreen.jsx';
 import { OnAirScreen } from '../components/attendee/OnAirScreen.jsx';
 import { EndedScreen } from '../components/attendee/EndedScreen.jsx';
 import { ErrorScreen } from '../components/attendee/ErrorScreen.jsx';
+import { Banner } from '../components/common/Banner.jsx';
 import { Toast } from '../components/ui/Toast.jsx';
 import { Spinner } from '../components/ui/Spinner.jsx';
 
@@ -22,7 +23,7 @@ export function JoinPage() {
   const {
     session, queue, floor, selfState, error, preemptedMessage,
     clearPreempted, connect, raiseHand, lowerHand, urgentRequest,
-    sendLevel, clearError
+    sendLevel, clearError, announcement
   } = useSession();
 
   const { connectionState } = useTransport();
@@ -102,6 +103,12 @@ export function JoinPage() {
         <div className="sticky top-0 z-50 flex items-center justify-center gap-2 px-4 py-2 bg-warning text-black text-xs font-bold shadow-md">
           <Spinner size="sm" className="border-t-black border-r-black/20" />
           <span>Reconnecting to host...</span>
+        </div>
+      )}
+
+      {announcement?.text && (
+        <div className="sticky top-0 z-40 p-3 bg-background/80 backdrop-blur">
+          <Banner type={announcement.type} message={announcement.text} />
         </div>
       )}
 

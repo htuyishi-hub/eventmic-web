@@ -1,14 +1,15 @@
 import React from 'react';
 import { Mic, MicOff, Radio, Clock } from 'lucide-react';
-import { ReasonBadge } from '../admin/ReasonBadge.jsx';
+import { ReasonBadge } from '../common/ReasonBadge.jsx';
 import { Button } from '../ui/Button.jsx';
 
 export function SpeakerFloorCard({
   floor,
   isOnFloor,
+  isNextUp,
   anotherPrincipalOnFloor,
   isRequested,
-  pendingHandovers,
+  pendingHandovers = [],
   onTakeFloor,
   onReleaseFloor,
   onRequestSpeak,
@@ -19,6 +20,8 @@ export function SpeakerFloorCard({
     <div className={`p-5 rounded-2xl border transition-all ${
       isOnFloor
         ? 'bg-live/10 border-live/50 shadow-lg shadow-live/10'
+        : isNextUp
+        ? 'bg-amber-500/10 border-amber-500/40 shadow-md shadow-amber-500/10'
         : 'bg-surface border-border'
     }`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -28,6 +31,11 @@ export function SpeakerFloorCard({
               <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-live text-white text-xs font-black uppercase tracking-wider shadow-md shadow-live/40 animate-pulse">
                 <Radio size={14} />
                 YOU ARE LIVE
+              </span>
+            ) : isNextUp ? (
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-black uppercase tracking-wider">
+                <Clock size={14} />
+                ON DECK (NEXT UP)
               </span>
             ) : (
               <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-background border border-border text-muted text-xs font-black uppercase tracking-wider">
@@ -40,6 +48,8 @@ export function SpeakerFloorCard({
           <div className="text-base sm:text-lg font-black text-white">
             {isOnFloor
               ? 'Your microphone is broadcast live to the venue'
+              : isNextUp
+              ? 'You are on deck. Mic is pre-warmed and ready to take floor.'
               : floor
               ? `${floor.name} (${floor.role === 'principal' ? 'Speaker' : 'Attendee'})`
               : 'Floor is open'}

@@ -13,6 +13,10 @@ import { EndSessionConfirm } from './EndSessionConfirm.jsx';
 import { SettingsDrawer } from './SettingsDrawer.jsx';
 import { SessionMetricsBar } from '../admin/SessionMetricsBar.jsx';
 import { SourceMetersCard } from '../admin/SourceMetersCard.jsx';
+import { AnnouncementBox } from '../admin/AnnouncementBox.jsx';
+import { MessagesPanel } from '../admin/MessagesPanel.jsx';
+import { DemoControls } from '../demo/DemoControls.jsx';
+import { Drawer } from '../ui/Drawer.jsx';
 import { Toast } from '../ui/Toast.jsx';
 import { Button } from '../ui/Button.jsx';
 
@@ -20,15 +24,15 @@ export function Dashboard({ onSessionEndedWithStats }) {
   const {
     session, queue, floor, level, attendeeCount, isMuted,
     grant, revoke, muteSpeaker, endSession, principalQueue,
-    allowPrincipal, metrics
+    allowPrincipal, metrics, messages = []
   } = useSession();
 
   const { connectionState, transport } = useTransport();
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [timeLimitMinutes, setTimeLimitMinutes] = useState(0);
 
   const {
     audioEngine, audioDevices, activeDeviceId, activeDeviceLabel,
@@ -45,18 +49,6 @@ export function Dashboard({ onSessionEndedWithStats }) {
     grant, revoke, muteSpeaker
   });
 
-  useEffect(() => {
-    if (!timeLimitMinutes || !floor?.startedAt) return;
-    const limitMs = timeLimitMinutes * 60 * 1000;
-    const interval = setInterval(() => {
-      if (Date.now() - floor.startedAt >= limitMs) {
-        setToastMessage(`Time limit (${timeLimitMinutes}m) reached. ${floor.name} revoked.`);
-        revoke(floor.id);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timeLimitMinutes, floor, revoke]);
-
   const handleEndSessionConfirmed = async () => {
     setIsEndConfirmOpen(false);
     const stats = getFinalStats();
@@ -71,6 +63,7 @@ export function Dashboard({ onSessionEndedWithStats }) {
     <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden">
       <SessionBar
         session={session} attendeeCount={attendeeCount} connectionState={connectionState}
+        unreadMessages={messages.length} onOpenMessages={() => setIsMessagesOpen(true)}
         onOpenQr={() => setIsQrOpen(true)} onOpenSettings={() => setIsSettingsOpen(true)}
         onEndSessionClick={() => setIsEndConfirmOpen(true)}
       />
@@ -99,11 +92,10 @@ export function Dashboard({ onSessionEndedWithStats }) {
       <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 p-4 sm:p-5 overflow-hidden">
         <section className="md:col-span-5 lg:col-span-4 h-full min-h-0 flex flex-col gap-3 overflow-y-auto pr-1">
           <SessionMetricsBar
-            metrics={metrics || session?.metrics}
-            floor={floor}
-            principalQueue={principalQueue}
-            onHandoverNext={(id) => allowPrincipal(id)}
+            metrics={metrics || session?.metrics} floor={floor}
+            principalQueue={principalQueue} onHandoverNext={(id) => allowPrincipal(id)}
           />
+          <AnnouncementBox />
           <SourceMetersCard liveLevels={liveLevels} onMuteSource={muteSource} />
           <div className="flex-1 min-h-[300px]">
             <AdminTabs queue={queue} onGrant={grant} onDrop={revoke} onOpenQr={() => setIsQrOpen(true)} />
@@ -125,6 +117,7 @@ export function Dashboard({ onSessionEndedWithStats }) {
       <footer className="h-7 px-6 bg-surface/80 border-t border-border flex items-center justify-between text-[11px] text-muted flex-shrink-0">
         <div className="flex items-center gap-4">
           <span className="font-bold uppercase tracking-wider text-[10px]">Shortcuts:</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">1-5</kbd> Tabs</span>
           <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">G</kbd> Grant</span>
           <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">M</kbd> Mute</span>
           <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">Esc</kbd> End</span>
@@ -139,13 +132,16 @@ export function Dashboard({ onSessionEndedWithStats }) {
       <RoomQrModal isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} code={session?.code} sessionName={session?.name} />
       <SettingsDrawer
         isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}
-        timeLimitMinutes={timeLimitMinutes} onTimeLimitChange={setTimeLimitMinutes}
         audioEngine={audioEngine} liveLevels={liveLevels} audioDevices={audioDevices}
         activeDeviceId={activeDeviceId} onSelectDevice={selectOutputDevice}
         onRefreshDevices={refreshDevices} onAttachMicStream={attachMicStream}
       />
+      <Drawer isOpen={isMessagesOpen} onClose={() => setIsMessagesOpen(false)} title="Backstage Messages">
+        <MessagesPanel onClose={() => setIsMessagesOpen(false)} />
+      </Drawer>
       <EndSessionConfirm isOpen={isEndConfirmOpen} onClose={() => setIsEndConfirmOpen(false)} onConfirm={handleEndSessionConfirmed} sessionName={session?.name} />
       {toastMessage && <Toast message={toastMessage} type="warning" onClose={() => setToastMessage('')} />}
+      <DemoControls />
     </div>
   );
 }

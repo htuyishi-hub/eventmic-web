@@ -297,3 +297,76 @@ Run through this procedure to verify physical sound hardware, routing, and hotpl
 7. **Cross-Browser Verification**:
    - Repeat the test in Microsoft Edge (full feature parity with Chrome).
    - In Firefox and Safari, verify that the console defaults gracefully to system output with descriptive capability notes.
+
+---
+
+## Three Roles & Frontend Architecture
+
+EventMic supports three distinct roles with dedicated views:
+
+1. **Admin Console (`/admin`, redirects `/host`)**:
+   - Venue audio engineer and stage director console.
+   - Per-source audio meters (Stage Speaker, Attendee, Urgent blip) with live limiter/clipping indicators.
+   - Tabs: **Queue** (raised hands with reason badges), **Urgent** (5s blip interruptions with ducking), **Attendees** (filtering by 1st-time / in-queue), **Spoke** (history log with duration), **Speakers** (principals list, PIN reveal/regenerate, revoke).
+   - Backstage chat drawer with quick replies (`OK`, `Wrap up please`, `1 minute remaining`).
+   - Broadcast announcement composer with 10-second preview banner.
+   - Full keyboard shortcuts: `1-5` for tabs, `G` grant, `M` mute, `Esc` end session, `Q` room QR.
+
+2. **Speaker Station (`/speaker`)**:
+   - Dedicated mobile view for stage presenters, keynote speakers, and panel guests.
+   - Secure 6-digit PIN authentication with brute-force attempt lockout.
+   - Pre-warm microphone check with device selector and live audio level test before entering stage.
+   - Stage floor status card: On-Deck (Next Up), Live On-Air, or Muted standby.
+   - Silent device guarantee: strictly disables audio playback/elements to prevent acoustic feedback with venue PA speakers.
+   - Screen Wake Lock, low battery warnings, connection drop alerts, and backstage chat drawer with admin.
+
+3. **Attendee Interface (`/join/:code`)**:
+   - Frictionless mobile web app for in-person audience members.
+   - Reason for speaking chips: *Question*, *Comment*, *Compliment*, *Clarification*.
+   - Minimum 56px touch targets for rapid, one-handed mobile interactions.
+   - Secondary Urgent Interruption action with two-step confirmation sheet (*Can't hear*, *Clarification*, *Other*).
+   - On-Air speaking screen with active countdown timer, 15-second wrap-up warning, and live VU meter.
+   - Microphone hardware stays strictly disconnected until granted the floor.
+
+---
+
+## Demo Mode & Interactive Simulator
+
+To test and review the complete multi-role experience offline without external servers or LiveKit credentials:
+
+```bash
+# Set in .env or run with VITE_TRANSPORT=demo
+VITE_TRANSPORT=demo npm run dev
+```
+Alternatively, visit any URL with `?demo=true` (e.g. `http://localhost:5173/admin?demo=true`).
+
+### Pre-seeded Demo Data
+- **12 Connected Attendees**
+- **2 Registered Principals**:
+  - `Sarah Connor` (PIN: `847291`)
+  - `Dr. Emmett Brown` (PIN: `121985`)
+- **4 Queued Hands** with diverse reasons (Question, Clarification, Comment, Compliment)
+- **1 Active Urgent Interruption**
+- **5 Spoken History Entries** with speaking times
+- **3 Backstage Chat Messages**
+
+### Collapsible Demo Controls Panel
+A floating control widget in the bottom-right corner allows instantaneous event injection:
+- **Add Attendee**: Adds a fake attendee to the room.
+- **Raise Hand**: Injects a queued hand with a selectable reason.
+- **Urgent Blip**: Sends a high-priority urgent sound issue alert.
+- **Principal Request**: Simulates a stage presenter requesting floor handover.
+- **Send Message**: Injects a backstage message from a speaker.
+- **Toggle Fair Mode**: Toggles attendee speaking fairness algorithms.
+
+---
+
+## Design System & Dev Gallery (`/dev/gallery`)
+
+Navigate to `/dev/gallery` in the browser to view all **29 interface states** rendered side-by-side with fake data:
+
+- **Admin Dashboard (6 states)**: Empty session, Live floor, Fair mode active, Urgent interruption present, Connection warning, Floor holder dropped.
+- **Speaker Station (9 states in 375px phone frames)**: Join PIN screen, Mic check & levels, Muted standby, Next up (on-deck), Live on-air, Questions closed, Urgent list, Principal handover request, Offline state.
+- **Attendee Flow (10 states in 375px phone frames)**: Join, Listening, Hand raised, Urgent confirm sheet, Preparing mic, On-air, On-air 15s warning, Turn ended, Session ended, Announcement banner.
+- **Attendee Edge & Error Screens (4 states in 375px phone frames)**: Invalid room code, Session full (200 cap), Microphone permission denied, Connection lost.
+

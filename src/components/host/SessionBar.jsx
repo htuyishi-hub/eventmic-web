@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, Copy, Check, Settings, LogOut, Users } from 'lucide-react';
+import { QrCode, Copy, Check, Settings, LogOut, Users, MessageSquare } from 'lucide-react';
 import { ConnectionBadge } from './ConnectionBadge.jsx';
 import { Button } from '../ui/Button.jsx';
 import { formatDuration } from '../../lib/time.js';
@@ -7,9 +7,11 @@ import { formatDuration } from '../../lib/time.js';
 export function SessionBar({
   session,
   attendeeCount = 0,
+  unreadMessages = 0,
   connectionState,
   onOpenQr,
   onOpenSettings,
+  onOpenMessages,
   onEndSessionClick
 }) {
   const [copied, setCopied] = useState(false);
@@ -17,12 +19,9 @@ export function SessionBar({
 
   useEffect(() => {
     if (!session?.createdAt) return;
-
     const update = () => {
-      const elapsed = Math.floor((Date.now() - session.createdAt) / 1000);
-      setSessionDuration(Math.max(0, elapsed));
+      setSessionDuration(Math.max(0, Math.floor((Date.now() - session.createdAt) / 1000)));
     };
-
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
@@ -41,7 +40,6 @@ export function SessionBar({
 
   return (
     <header className="h-16 px-4 sm:px-6 bg-surface border-b border-border flex items-center justify-between gap-4 flex-shrink-0">
-      {/* Left: App Logo & Session Name */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white font-black text-sm flex-shrink-0 shadow-md shadow-accent/30">
           EM
@@ -61,9 +59,7 @@ export function SessionBar({
         </div>
       </div>
 
-      {/* Right: Actions, Attendees, Settings, End */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        {/* Attendees Count */}
         <div
           title={`${attendeeCount} Connected Attendees`}
           className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background border border-border text-xs font-semibold text-muted font-mono"
@@ -72,7 +68,6 @@ export function SessionBar({
           <span>{attendeeCount}</span>
         </div>
 
-        {/* Copy Link Button */}
         <Button
           variant="secondary"
           size="sm"
@@ -83,7 +78,22 @@ export function SessionBar({
           <span>{copied ? 'Copied' : 'Copy Link'}</span>
         </Button>
 
-        {/* Show QR Button */}
+        {onOpenMessages && (
+          <button
+            type="button"
+            onClick={onOpenMessages}
+            title="Backstage Messages"
+            className="relative p-2 rounded-xl bg-background border border-border text-muted hover:text-white hover:border-accent transition-colors"
+          >
+            <MessageSquare size={17} />
+            {unreadMessages > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent text-white font-bold text-[9px] flex items-center justify-center animate-pulse">
+                {unreadMessages}
+              </span>
+            )}
+          </button>
+        )}
+
         <Button
           variant="secondary"
           size="sm"
@@ -95,7 +105,6 @@ export function SessionBar({
           <span className="hidden sm:inline">Show QR (Q)</span>
         </Button>
 
-        {/* Settings Button */}
         <button
           onClick={onOpenSettings}
           title="Audio & Stage Settings"
@@ -105,7 +114,6 @@ export function SessionBar({
           <Settings size={18} />
         </button>
 
-        {/* End Session Button */}
         <Button
           variant="secondary"
           size="sm"

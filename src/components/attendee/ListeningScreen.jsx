@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Hand, Radio, ShieldCheck, Zap } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
+import { UrgentConfirmSheet } from './UrgentConfirmSheet.jsx';
 
 const REASONS = [
   { id: 'question', label: 'Question' },
@@ -11,6 +12,7 @@ const REASONS = [
 
 export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }) {
   const [selectedReason, setSelectedReason] = useState('question');
+  const [isUrgentOpen, setIsUrgentOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto bg-background text-foreground">
@@ -76,7 +78,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
           size="huge"
           variant="primary"
           onClick={() => onRaiseHand({ reason: selectedReason })}
-          className="w-full gap-3 text-lg font-black uppercase tracking-wider"
+          className="w-full gap-3 text-lg font-black uppercase tracking-wider min-h-[56px]"
         >
           <Hand size={24} />
           <span>Raise Hand</span>
@@ -86,8 +88,8 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
           <Button
             size="md"
             variant="secondary"
-            onClick={onUrgent}
-            className="w-full gap-2 text-xs font-bold uppercase tracking-wider text-amber-300 border-amber-500/30 hover:bg-amber-500/10"
+            onClick={() => setIsUrgentOpen(true)}
+            className="w-full gap-2 text-xs font-bold uppercase tracking-wider text-amber-300 border-amber-500/30 hover:bg-amber-500/10 min-h-[44px]"
           >
             <Zap size={14} className="text-amber-400" />
             <span>Urgent (5s Blip)</span>
@@ -99,6 +101,12 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
           <span>Your microphone stays off until granted the floor.</span>
         </div>
       </div>
+
+      <UrgentConfirmSheet
+        isOpen={isUrgentOpen}
+        onClose={() => setIsUrgentOpen(false)}
+        onConfirm={(reason) => onUrgent?.(reason)}
+      />
     </div>
   );
 }

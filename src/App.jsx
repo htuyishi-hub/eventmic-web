@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage.jsx';
 import { AdminPage } from './pages/AdminPage.jsx';
 import { SpeakerPage } from './pages/SpeakerPage.jsx';
 import { JoinPage } from './pages/JoinPage.jsx';
+import { DevGalleryPage } from './pages/DevGalleryPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/host" element={<Navigate to="/admin" replace />} />
             <Route path="/speaker" element={<SpeakerPage />} />
             <Route path="/join/:code" element={<JoinPage />} />
+            <Route path="/dev/gallery" element={<DevGalleryPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>

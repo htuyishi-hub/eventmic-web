@@ -10,16 +10,20 @@ export function OnAirScreen({
   onStopSpeaking,
   onMicError,
   sendLevel,
-  capSeconds = 120
+  capSeconds = 120,
+  previewMode = false,
+  overrideSpeakingSeconds,
+  overrideLevel = 0.65
 }) {
-  const [level, setLevel] = useState(0);
-  const [speakingSeconds, setSpeakingSeconds] = useState(0);
+  const [level, setLevel] = useState(overrideLevel);
+  const [speakingSeconds, setSpeakingSeconds] = useState(overrideSpeakingSeconds || 0);
 
   const streamRef = useRef(null);
   const audioMeterRef = useRef(null);
   const wakeLockRef = useRef(null);
 
   useEffect(() => {
+    if (previewMode) return;
     let isCancelled = false;
 
     async function initMic() {

@@ -1,10 +1,11 @@
 /**
+ * EventMic Transport Types & Contracts.
  * @typedef {'admin' | 'principal' | 'attendee' | 'host'} Role
  * @typedef {'connecting' | 'connected' | 'reconnecting' | 'disconnected'} ConnectionState
  * @typedef {'listening' | 'hand_raised' | 'preparing' | 'on_air'} AttendeeSelfState
  * @typedef {'live' | 'ended'} SessionStatus
  * @typedef {'INVALID_CODE' | 'SESSION_ENDED' | 'FULL' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'UNKNOWN'} ErrorCode
- * @typedef {'question' | 'comment' | 'compliment' | 'clarification'} HandReason
+ * @typedef {'question' | 'comment' | 'compliment' | 'clarification' | 'urgent' | 'cant_hear' | 'other'} HandReason
  * 
  * @typedef {Object} SessionInfo
  * @property {string} code - 6-character room code
@@ -28,16 +29,67 @@
  * @property {number} startedAt - Timestamp when floor was granted (epoch ms)
  * @property {string} [mode] - Floor mode ('principal' | 'attendee' | 'urgent')
  * @property {string} [reason] - Reason attendee raised hand
+ * @property {boolean} [disconnected] - True if speaker dropped connection
  * 
  * @typedef {Object} PrincipalInfo
+ * @property {string} id - Unique identifier
+ * @property {string} name - Display name
+ * @property {string} [pin] - 6-digit access PIN
+ * @property {number} createdAt - Timestamp
+ * @property {'offline' | 'on_deck' | 'live' | 'idle'} [status]
+ * 
+ * @typedef {Object} AttendeeInfo
  * @property {string} id
  * @property {string} name
- * @property {string} [pin]
+ * @property {'listening' | 'hand_raised' | 'on_air' | 'spoken'} status
+ * @property {HandReason} [handReason]
+ * @property {number} [raisedAt]
+ * @property {number} speakCount
+ * @property {boolean} hasNotSpoken
+ * @property {number} joinedAt
+ * 
+ * @typedef {Object} SpokenRecord
+ * @property {string} id
+ * @property {string} name
+ * @property {string} reason
+ * @property {number} startedAt
+ * @property {number} endedAt
+ * @property {number} durationSeconds
+ * @property {Role} role
+ * 
+ * @typedef {Object} UrgentRequest
+ * @property {string} id
+ * @property {string} attendeeId
+ * @property {string} name
+ * @property {string} reason
+ * @property {number} requestedAt
+ * 
+ * @typedef {Object} ChatMessage
+ * @property {string} id
+ * @property {string} senderId
+ * @property {string} senderName
+ * @property {Role} senderRole
+ * @property {string} text
+ * @property {number} timestamp
+ * 
+ * @typedef {Object} Announcement
+ * @property {string} id
+ * @property {'info' | 'warning'} type
+ * @property {string} text
  * @property {number} createdAt
+ * @property {number} expiresAt
+ * 
+ * @typedef {Object} SessionSettings
+ * @property {'off' | 'auto' | 'on'} fairMode
+ * @property {number} fairFromMinutes
+ * @property {number | null} sessionEndTime
+ * @property {boolean} allowUrgent
+ * @property {number} attendeeTurnCapSeconds
+ * @property {'on_demand' | 'always'} principalConnectMode
  * 
  * @typedef {Object} TransportError
- * @property {ErrorCode} code - Error category
- * @property {string} message - Human-readable explanation
+ * @property {ErrorCode} code
+ * @property {string} message
  * 
  * @typedef {Object} TransportEvents
  * @property {(queue: QueuedAttendee[]) => void} queue
@@ -46,11 +98,16 @@
  * @property {(session: SessionInfo) => void} session
  * @property {(state: ConnectionState) => void} connection
  * @property {(error: TransportError) => void} error
- * @property {(data: { count: number }) => void} attendees
+ * @property {(data: { count: number, list?: AttendeeInfo[] }) => void} attendees
  * @property {(state: AttendeeSelfState) => void} self
  * @property {(stream: MediaStream | null) => void} [speakerStream]
  * @property {(principals: PrincipalInfo[]) => void} [principals]
  * @property {(requests: Array<{ id: string, name: string, requestedAt: number }>) => void} [principalQueue]
+ * @property {(spokenList: SpokenRecord[]) => void} [spoken]
+ * @property {(urgentList: UrgentRequest[]) => void} [urgent]
+ * @property {(messages: ChatMessage[]) => void} [messages]
+ * @property {(announcement: Announcement | null) => void} [announcement]
+ * @property {(settings: SessionSettings) => void} [settings]
  * @property {(reason: string) => void} [preempted]
  * @property {(active: boolean) => void} [fairMode]
  * 
@@ -61,6 +118,7 @@
  * @property {() => Promise<void>} disconnect
  * @property {(options?: { reason?: HandReason }) => Promise<void>} raiseHand
  * @property {() => Promise<void>} lowerHand
+ * @property {() => Promise<void>} urgentRequest
  * @property {(attendeeId: string) => Promise<void>} grant
  * @property {(attendeeId?: string) => Promise<void>} revoke
  * @property {() => Promise<void>} takeFloor
@@ -74,6 +132,10 @@
  * @property {() => Promise<Object>} fetchSessionState
  * @property {(muted: boolean) => Promise<void>} muteSpeaker
  * @property {(level: number) => Promise<void>} sendLevel
+ * @property {(text: string, recipientRole?: Role) => Promise<void>} [sendMessage]
+ * @property {(text: string, type?: 'info' | 'warning', durationMs?: number) => Promise<void>} [broadcastAnnouncement]
+ * @property {(urgentId: string) => Promise<void>} [grantUrgent]
+ * @property {(urgentId: string) => Promise<void>} [dismissUrgent]
  * @property {(event: string, handler: Function) => () => void} on
  */
 

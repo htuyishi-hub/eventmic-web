@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useSession } from '../context/SessionContext.jsx';
-import { SpeakerLogin } from '../components/speaker/SpeakerLogin.jsx';
+import { SpeakerJoinScreen } from '../components/speaker/SpeakerJoinScreen.jsx';
+import { SpeakerMicCheckScreen } from '../components/speaker/SpeakerMicCheckScreen.jsx';
 import { SpeakerDashboard } from '../components/speaker/SpeakerDashboard.jsx';
 
 export function SpeakerPage() {
   const { session, connect } = useSession();
   const [isConnected, setIsConnected] = useState(Boolean(session && session.status === 'live'));
+  const [isMicChecked, setIsMicChecked] = useState(false);
 
   const handleLogin = async ({ code, pin, name }) => {
     await connect({
@@ -18,8 +20,19 @@ export function SpeakerPage() {
   };
 
   if (!isConnected || !session || session.status !== 'live') {
-    return <SpeakerLogin onLogin={handleLogin} initialCode={session?.code || ''} />;
+    return <SpeakerJoinScreen onLogin={handleLogin} initialCode={session?.code || ''} />;
   }
 
-  return <SpeakerDashboard onExit={() => setIsConnected(false)} />;
+  if (!isMicChecked) {
+    return <SpeakerMicCheckScreen onContinue={() => setIsMicChecked(true)} />;
+  }
+
+  return (
+    <SpeakerDashboard
+      onExit={() => {
+        setIsConnected(false);
+        setIsMicChecked(false);
+      }}
+    />
+  );
 }
