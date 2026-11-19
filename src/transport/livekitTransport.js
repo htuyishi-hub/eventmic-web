@@ -338,7 +338,6 @@ export class LiveKitTransport {
       }
 
       if (this.role === 'host') {
-        this._getOrCreateAudioElement();
         this._syncHostState();
       } else {
         this.selfState = 'listening';
@@ -388,31 +387,21 @@ export class LiveKitTransport {
       this.room.on(RoomEvent.ParticipantDisconnected, handleParticipantsChange);
       this.room.on(RoomEvent.ParticipantAttributesChanged, handleParticipantsChange);
 
-      // Track subscription (Active speaker audio)
+      // Track subscription (Active speaker audio - expose MediaStream to HostAudioEngine)
       this.room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio || track.kind === 'audio') {
-          const el = this._getOrCreateAudioElement();
-          if (el) {
-            track.attach(el);
-            if (this.outputDeviceId && typeof el.setSinkId === 'function') {
-              el.setSinkId(this.outputDeviceId).catch(() => {});
-            }
-          }
-
           if (track.mediaStreamTrack) {
             const stream = new MediaStream([track.mediaStreamTrack]);
-            this.audioMeter.start(stream, (lvl) => {
-              this.emit('level', lvl);
-            }, 66);
+            this.speakerStream = stream;
+            this.emit('speakerStream', stream);
           }
         }
       });
 
       this.room.on(RoomEvent.TrackUnsubscribed, (track) => {
         if (track.kind === Track.Kind.Audio || track.kind === 'audio') {
-          track.detach();
-          this.audioMeter.stop();
-          this.emit('level', 0);
+          this.speakerStream = null;
+          this.emit('speakerStream', null);
         }
       });
     }

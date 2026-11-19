@@ -34,6 +34,7 @@
  * @property {(error: TransportError) => void} error
  * @property {(data: { count: number }) => void} attendees
  * @property {(state: AttendeeSelfState) => void} self
+ * @property {(stream: MediaStream | null) => void} [speakerStream]
  * 
  * @typedef {Object} TransportInterface
  * @property {(params: { name: string }) => Promise<SessionInfo>} createSession

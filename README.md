@@ -180,10 +180,120 @@ Both projects feature comprehensive test suites:
 cd eventmic-server
 npm test
 
-# Run web unit & transport tests (Vitest + Happy-DOM)
+# Run web unit, audio engine & transport tests (Vitest + Happy-DOM)
 cd ../eventmic-web
 npm test
 
 # Verify production build
 npm run build
 ```
+
+---
+
+## Host Audio Engine & Hardware Integration
+
+EventMic Web incorporates a dedicated framework-free Web Audio processing engine (`src/lib/hostAudio.js`) tailored for live event sound engineers and PA systems.
+
+### 1. Web Audio Processing Chain
+
+```
+Speaker WebRTC MediaStream
+  │
+  ├──► [Hidden Muted <audio> Element] (Fixes Chrome remote WebRTC Web Audio playback gotcha)
+  │
+  ▼
+[MediaStreamAudioSourceNode]
+  │
+  ├──► [Input AnalyserNode] ─────────► Pre-processing Level Meter (0–100%)
+  │
+  ▼
+[High-Pass Filter] (BiquadFilterNode highpass, default 80 Hz, adjustable 40–240 Hz, bypassable)
+  │
+  ▼
+[RMS Noise Gate] (ScriptProcessor fallback, adjustable threshold -60 to -20 dB, release 50–500 ms)
+  │
+  ▼
+[DynamicsCompressor Limiter] (Threshold -3 dBFS, 20:1 ratio, 1 ms attack, 50 ms release, bypassable)
+  │
+  ▼
+[Volume GainNode] (0% to 200%, default 100%)
+  │
+  ▼
+[Mute GainNode] (Instant, click-free 10 ms linear ramp)
+  │
+  ├──► [Output AnalyserNode] ────────► Post-limiter Level Meter + Peak Clip Hold (2s) + LIM active light
+  │
+  ▼
+[Channel Router / ChannelMergerNode] (Discrete mono mapping: Both/Centre, Left Only, Right Only, Channel N)
+  │
+  ▼
+AudioContext.destination (or MediaStreamAudioDestinationNode with setSinkId fallback)
+```
+
+### 2. Browser Compatibility Table
+
+| Feature / Browser | Google Chrome (110+) | Microsoft Edge (110+) | Mozilla Firefox | Apple Safari (macOS / iOS) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`AudioContext.setSinkId`** | ✅ Supported | ✅ Supported | ❌ Unavailable | ❌ Unavailable |
+| **`HTMLMediaElement.setSinkId`** | ✅ Supported | ✅ Supported | ⚠️ Behind config flag | ❌ Unavailable |
+| **Custom Device Selection** | ✅ Full support | ✅ Full support | ℹ️ System default | ℹ️ System default |
+| **Discrete Multichannel (>2ch)** | ✅ Supported | ✅ Supported | ⚠️ Limited | ⚠️ Limited |
+| **High-Pass, Gate & Limiter DSP**| ✅ Supported | ✅ Supported | ✅ Supported | ✅ Supported |
+| **Device Hotplug (`devicechange`)**| ✅ Real-time | ✅ Real-time | ✅ Real-time | ⚠️ Partial |
+
+> [!NOTE]
+> When `setSinkId` is unsupported (Safari or Firefox), the UI displays: *"Your browser uses the system default output; use Chrome or Edge for device selection"*, and safely routes audio through the operating system's active sound card.
+
+---
+
+### 3. Audio Hardware Setup Guides
+
+#### A. USB Audio Interface or Venue Mixing Console (e.g., Focusrite, Behringer, Yamaha, Allen & Heath)
+1. Connect your USB audio interface or mixer to the host computer via USB.
+2. Open `/host` in Google Chrome or Microsoft Edge.
+3. Open **Settings &rarr; Audio Output Device**.
+4. If device brand names are hidden, click **Allow device names** (grants temporary permission so the browser can read hardware labels).
+5. Select your interface (e.g. `Focusrite Scarlett 2i2`, `Behringer X32 USB`, or `USB Audio CODEC`).
+6. In **Channel Routing**, select:
+   - **Both (Centre)**: Sends speech to physical outputs 1 & 2 (Main Stereo PA).
+   - **Left Only (Ch 1)**: Isolates speech to physical output 1 (e.g. Stage Left or Monitor Mix).
+   - **Right Only (Ch 2)**: Isolates speech to physical output 2 (e.g. Broadcast stream feed).
+   - **Channel N (Advanced)**: If your audio desk provides a multi-channel USB card (e.g. 8 or 32 channels), discrete buttons appear (`Ch 1`, `Ch 2`, `Ch 3`, etc.). Select the exact input strip on your mixing desk.
+7. Click **Play Test Sound** or individual channel test tones to verify audio appears on the corresponding meters on your physical desk.
+
+#### B. Virtual Audio Device (e.g., BlackHole, Loopback, VB-Cable) for Zoom / OBS / vMix
+1. Install a virtual audio device (e.g., [BlackHole 2ch/16ch](https://github.com/ExistentialAudio/BlackHole) on macOS or [VB-Audio Virtual Cable](https://vb-audio.com/Cable/) on Windows).
+2. In EventMic **Settings &rarr; Audio Output Device**, select `BlackHole 2ch` (or `CABLE Input`).
+3. In OBS, Zoom, or vMix, configure your microphone/input source as `BlackHole 2ch` (or `CABLE Output`).
+4. Attendee questions will now stream directly into your stream or video conference with zero bleed and processed by the high-pass filter, noise gate, and limiter.
+
+---
+
+## Hardware Test Script
+
+Run through this procedure to verify physical sound hardware, routing, and hotplug failover:
+
+1. **Host Launch & Phone Join**:
+   - On a laptop running Chrome or Edge, open `/host`, unlock the console, and start a live session.
+   - Scan the QR code from a smartphone and join as an attendee.
+2. **Device Enumeration & Test Tone Verification**:
+   - Open **Settings** on the host. Click **Allow device names** if prompted.
+   - Select the laptop's built-in speakers.
+   - Click the test tone buttons: **Centre**, **Left**, **Right**. Confirm the 1 kHz calibration sine tone lands exactly where labelled.
+3. **USB Soundcard Hotplug & Discrete Routing**:
+   - Plug in a USB audio interface, multi-channel soundcard, or digital mixer.
+   - Confirm the device list in **Settings** updates automatically without reloading the page.
+   - Select the USB interface and test physical desk routing.
+4. **Hot-Unplug Protection & Live Failover**:
+   - Grant the floor to the attendee smartphone and speak continuously into the phone.
+   - While audio is playing live, unplug the USB interface cable from the laptop.
+   - **Expected behavior**: The host dashboard displays an amber warning banner (*"Audio device was disconnected. Output safely switched to default."*), output immediately switches to the laptop's built-in sound without crashing, and the live session remains 100% active.
+5. **Acoustic Processing & Clip Metering**:
+   - Speak normally: adjust the **Volume slider** (0% to 200%), press **M** to verify click-free muting.
+   - Enable the **High-Pass Filter (80 Hz)** and **RMS Noise Gate (-45 dB)** in Settings to verify background room rumble suppression.
+   - Shout or make a loud noise near the phone: observe the amber **LIM** indicator illuminate as the DynamicsCompressor limits peaks at -3 dBFS. If volume is pushed above 150%, observe the red **CLIP** light illuminate and hold for 2 seconds.
+6. **Persistence**:
+   - Refresh the host page: reopen Settings and verify that the selected output device, routing mode, high-pass cutoff, gate, and limiter settings were preserved in `localStorage`.
+7. **Cross-Browser Verification**:
+   - Repeat the test in Microsoft Edge (full feature parity with Chrome).
+   - In Firefox and Safari, verify that the console defaults gracefully to system output with descriptive capability notes.
