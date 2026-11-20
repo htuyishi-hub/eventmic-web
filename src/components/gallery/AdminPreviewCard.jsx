@@ -60,7 +60,7 @@ export function AdminPreviewCard({
               <AlertTriangle size={15} className="text-rose-400 flex-shrink-0" />
               <span>Floor holder dropped! Remote attendee audio stream lost.</span>
             </div>
-            <button className="px-2 py-0.5 rounded bg-rose-500 text-white text-[10px] font-bold uppercase">
+            <button className="px-2 py-0.5 rounded bg-rose-500 text-white text-xs font-bold uppercase">
               Revoke Floor
             </button>
           </div>
@@ -70,6 +70,7 @@ export function AdminPreviewCard({
         <div className="flex-1 p-3 grid grid-cols-12 gap-3 min-h-0 overflow-hidden">
           <div className="col-span-5 flex flex-col gap-2 min-h-0 overflow-y-auto">
             <SessionMetricsBar
+              cards={false}
               metrics={metrics}
               floor={floor}
               principalQueue={[]}
@@ -100,6 +101,8 @@ export function AdminPreviewCard({
               onEndSpeaker={() => {}}
               onToggleMute={() => {}}
               queueLength={queue.length}
+              nextAttendeeName={queue[0]?.name}
+              nextRaisedAt={queue[0]?.raisedAt}
             />
           </div>
         </div>

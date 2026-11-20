@@ -33,13 +33,13 @@ export function FairModeSection() {
           </span>
         </div>
         {fairModeActive && (
-          <span className="text-[10px] font-bold text-live bg-live/15 px-2 py-0.5 rounded border border-live/30">
+          <span className="text-xs font-bold text-live bg-live/15 px-2 py-0.5 rounded border border-live/30">
             ACTIVE
           </span>
         )}
       </div>
 
-      <p className="text-[11px] text-muted">
+      <p className="text-xs text-muted">
         Prioritizes attendees who have not spoken before repeat speakers.
       </p>
 

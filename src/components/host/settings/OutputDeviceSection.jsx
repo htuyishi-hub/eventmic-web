@@ -33,7 +33,7 @@ export function OutputDeviceSection({
           <span>Audio Output Device</span>
         </div>
         {sinkIdSupported && (
-          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-surface border border-border text-muted">
+          <span className="text-xs font-mono uppercase px-2 py-0.5 rounded bg-surface border border-border text-muted">
             Routing Active
           </span>
         )}

@@ -77,7 +77,7 @@ export function SettingsDrawer({
             <Sparkles size={14} className="text-accent" />
             <span>Transport Architecture</span>
           </div>
-          <p className="text-[11px] leading-relaxed">
+          <p className="text-xs leading-relaxed">
             {transport?.isDemo
               ? 'Running in Demo Mode with simulated realistic multi-role event data and timer state transitions.'
               : transport?.constructor?.name === 'LiveKitTransport'

@@ -14,6 +14,7 @@ import { SettingsDrawer } from './SettingsDrawer.jsx';
 import { SessionMetricsBar } from '../admin/SessionMetricsBar.jsx';
 import { SourceMetersCard } from '../admin/SourceMetersCard.jsx';
 import { AnnouncementBox } from '../admin/AnnouncementBox.jsx';
+import { UrgentBanner } from '../admin/UrgentBanner.jsx';
 import { MessagesPanel } from '../admin/MessagesPanel.jsx';
 import { Drawer } from '../ui/Drawer.jsx';
 import { Toast } from '../ui/Toast.jsx';
@@ -34,6 +35,8 @@ export function Dashboard({ onSessionEndedWithStats }) {
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [isDiagOpen, setIsDiagOpen] = useState(false);
+  const [isAnnounceOpen, setIsAnnounceOpen] = useState(false);
   const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -49,7 +52,12 @@ export function Dashboard({ onSessionEndedWithStats }) {
   useHostShortcuts({
     queue, floor, isMuted, isQrOpen, setIsQrOpen, isSettingsOpen,
     setIsSettingsOpen, isEndConfirmOpen, setIsEndConfirmOpen,
-    grant, revoke, muteSpeaker
+    grant, revoke, muteSpeaker,
+    anyDrawerOpen: isDiagOpen || isMessagesOpen || isAnnounceOpen,
+    onToggleDiagnostics: () => setIsDiagOpen((v) => !v),
+    onToggleMessages: () => setIsMessagesOpen((v) => !v),
+    onToggleSettings: () => setIsSettingsOpen((v) => !v),
+    onToggleAnnounce: () => setIsAnnounceOpen((v) => !v)
   });
 
   const handleEndSessionConfirmed = async () => {
@@ -69,7 +77,12 @@ export function Dashboard({ onSessionEndedWithStats }) {
         unreadMessages={messages.length} onOpenMessages={() => setIsMessagesOpen(true)}
         onOpenQr={() => setIsQrOpen(true)} onOpenSettings={() => setIsSettingsOpen(true)}
         onEndSessionClick={() => setIsEndConfirmOpen(true)}
+        onOpenDiagnostics={() => setIsDiagOpen(true)}
+        onOpenAnnounce={() => setIsAnnounceOpen(true)}
+        onAir={!!floor && !isMuted}
       />
+
+      <UrgentBanner />
 
       {unpluggedWarning && (
         <div className="bg-amber-500 text-black px-4 py-2 flex items-center justify-between text-xs font-bold shadow-md flex-shrink-0 animate-in slide-in-from-top duration-200">
@@ -95,10 +108,10 @@ export function Dashboard({ onSessionEndedWithStats }) {
       <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-4 p-4 sm:p-5 overflow-hidden">
         <section className="md:col-span-5 lg:col-span-4 h-full min-h-0 flex flex-col gap-3 overflow-y-auto pr-1">
           <SessionMetricsBar
+            cards={false}
             metrics={metrics || session?.metrics} floor={floor}
             principalQueue={principalQueue} onHandoverNext={(id) => allowPrincipal(id)}
           />
-          <AnnouncementBox />
           <SourceMetersCard liveLevels={liveLevels} onMuteSource={muteSource} />
           <div className="flex-1 min-h-[300px]">
             <AdminTabs queue={queue} onGrant={grant} onDrop={revoke} onOpenQr={() => setIsQrOpen(true)} />
@@ -112,23 +125,26 @@ export function Dashboard({ onSessionEndedWithStats }) {
             isClipping={isClipping} isLimiterActive={liveLevels.limiterActive}
             onEndSpeaker={() => revoke(floor?.id)} onToggleMute={() => muteSpeaker(!isMuted)}
             queueLength={queue.length} onGrantNext={() => queue[0] && grant(queue[0].id)}
-            nextAttendeeName={queue[0]?.name}
+            nextAttendeeName={queue[0]?.name} nextRaisedAt={queue[0]?.raisedAt}
           />
         </section>
       </main>
 
-      <footer className="h-7 px-6 bg-surface/80 border-t border-border flex items-center justify-between text-[11px] text-muted flex-shrink-0">
+      <footer className="h-8 px-6 bg-surface/80 border-t border-border flex items-center justify-between text-xs text-muted flex-shrink-0">
         <div className="flex items-center gap-4">
-          <span className="font-bold uppercase tracking-wider text-[10px]">Shortcuts:</span>
-          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">1-5</kbd> Tabs</span>
-          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">G</kbd> Grant</span>
-          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">M</kbd> Mute</span>
-          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">Esc</kbd> End</span>
-          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">Q</kbd> QR</span>
+          <span className="font-bold uppercase tracking-wider text-xs">Keys:</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">1-5</kbd> Tabs</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">G</kbd> Grant</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">M</kbd> Mute</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">D</kbd> Diagnostics</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">C</kbd> Messages</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">A</kbd> Announce</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">S</kbd> Settings</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-xs text-white">Q</kbd> QR</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[10px] text-muted/70">v{__APP_VERSION__}</span>
-          <div onClick={() => setIsSettingsOpen(true)} className="flex items-center gap-1.5 font-mono text-[10px] cursor-pointer hover:text-white transition-colors">
+          <span className="font-mono text-xs text-muted/70">v{__APP_VERSION__}</span>
+          <div onClick={() => setIsSettingsOpen(true)} className="flex items-center gap-1.5 font-mono text-xs cursor-pointer hover:text-white transition-colors">
             <Volume2 size={12} className="text-accent" />
             <span className="truncate max-w-[220px]">Output: {activeDeviceLabel}</span>
           </div>
@@ -142,6 +158,18 @@ export function Dashboard({ onSessionEndedWithStats }) {
         activeDeviceId={activeDeviceId} onSelectDevice={selectOutputDevice}
         onRefreshDevices={refreshDevices} onAttachMicStream={attachMicStream}
       />
+      <Drawer isOpen={isAnnounceOpen} onClose={() => setIsAnnounceOpen(false)} title="Venue Announcement">
+        <div className="p-6">
+          <AnnouncementBox />
+        </div>
+      </Drawer>
+
+      <Drawer isOpen={isDiagOpen} onClose={() => setIsDiagOpen(false)} title="Diagnostics">
+        <div className="p-6">
+          <SessionMetricsBar cards alerts={false} metrics={metrics || session?.metrics} floor={floor} principalQueue={principalQueue} />
+        </div>
+      </Drawer>
+
       <Drawer isOpen={isMessagesOpen} onClose={() => setIsMessagesOpen(false)} title="Backstage Messages">
         <MessagesPanel onClose={() => setIsMessagesOpen(false)} />
       </Drawer>

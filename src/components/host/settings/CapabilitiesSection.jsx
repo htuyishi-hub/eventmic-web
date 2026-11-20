@@ -32,7 +32,7 @@ export function CapabilitiesSection({
             <Activity size={14} className="text-accent" />
             <span>Real-Time Graph Metering</span>
           </div>
-          <div className="flex items-center gap-2 font-mono text-[10px]">
+          <div className="flex items-center gap-2 font-mono text-xs">
             {liveLevels.limiterActive && (
               <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold">
                 LIM
@@ -48,7 +48,7 @@ export function CapabilitiesSection({
 
         <div className="space-y-2">
           <div>
-            <div className="flex justify-between text-[10px] font-mono text-muted mb-1">
+            <div className="flex justify-between text-xs font-mono text-muted mb-1">
               <span>INPUT (PRE-PROCESSING)</span>
               <span>{Math.round((liveLevels.in || 0) * 100)}%</span>
             </div>
@@ -56,7 +56,7 @@ export function CapabilitiesSection({
           </div>
 
           <div>
-            <div className="flex justify-between text-[10px] font-mono text-muted mb-1">
+            <div className="flex justify-between text-xs font-mono text-muted mb-1">
               <span>OUTPUT (POST-LIMITER / VOLUME)</span>
               <span>{Math.round((liveLevels.out || 0) * 100)}%</span>
             </div>
@@ -70,7 +70,7 @@ export function CapabilitiesSection({
         {items.map((it) => (
           <div key={it.label} className="flex items-center justify-between p-2.5 px-3">
             <span className="text-muted">{it.label}</span>
-            <span className="font-mono text-white text-[11px] font-semibold text-right max-w-[200px] truncate">
+            <span className="font-mono text-white text-xs font-semibold text-right max-w-[200px] truncate">
               {it.value}
             </span>
           </div>
@@ -78,7 +78,7 @@ export function CapabilitiesSection({
       </div>
 
       {capabilities.routingNote && (
-        <p className="text-[11px] text-muted leading-relaxed px-1">
+        <p className="text-xs text-muted leading-relaxed px-1">
           {capabilities.routingNote}
         </p>
       )}

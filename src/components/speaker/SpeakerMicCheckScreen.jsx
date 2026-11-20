@@ -128,7 +128,7 @@ export function SpeakerMicCheckScreen({ onContinue }) {
 
         <div className="space-y-3">
           <div>
-            <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">Audio Input Device</label>
+            <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">Audio Input Device</label>
             <select
               value={selectedDevice}
               onChange={(e) => setSelectedDevice(e.target.value)}

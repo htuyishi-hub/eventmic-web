@@ -28,7 +28,7 @@ export function RoleBadge({ role = 'attendee', className = '', size = 'sm' }) {
   const config = ROLE_CONFIG[role] || ROLE_CONFIG.attendee;
   const Icon = config.icon;
   const iconSize = size === 'xs' ? 10 : size === 'lg' ? 14 : 12;
-  const textClass = size === 'xs' ? 'text-[9px] px-1.5 py-0.5' : size === 'lg' ? 'text-xs px-2.5 py-1' : 'text-[10px] px-2 py-0.5';
+  const textClass = size === 'xs' ? 'text-xs px-1.5 py-0.5' : size === 'lg' ? 'text-xs px-2.5 py-1' : 'text-xs px-2 py-0.5';
 
   return (
     <span

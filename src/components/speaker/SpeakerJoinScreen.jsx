@@ -72,7 +72,7 @@ export function SpeakerJoinScreen({ onLogin, onJoin, initialCode = '' }) {
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">
               Room Code
             </label>
             <input
@@ -88,7 +88,7 @@ export function SpeakerJoinScreen({ onLogin, onJoin, initialCode = '' }) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">
               6-Digit Speaker PIN
             </label>
             <input
@@ -106,7 +106,7 @@ export function SpeakerJoinScreen({ onLogin, onJoin, initialCode = '' }) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">
               Your Name (Optional)
             </label>
             <input

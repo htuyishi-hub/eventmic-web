@@ -49,12 +49,12 @@ export function QueueItem({
             </span>
             <ReasonBadge reason={item.reason || 'question'} />
             {item.hasNotSpoken && (
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-live/20 text-live border border-live/30">
+              <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-live/20 text-live border border-live/30">
                 1st
               </span>
             )}
           </div>
-          <div className="text-[11px] text-muted font-mono mt-0.5">
+          <div className="text-xs text-muted font-mono mt-0.5">
             {waitText}
             {item.speakCount !== undefined && ` • Spoke: ${item.speakCount}`}
           </div>
@@ -77,7 +77,7 @@ export function QueueItem({
           onClick={() => onDrop(item.id)}
           aria-label={`Remove ${item.name} from queue`}
           title="Remove from queue"
-          className="p-1.5 rounded-lg text-muted hover:text-live hover:bg-live/10 transition-colors"
+          className="min-w-[44px] min-h-[44px] grid place-items-center rounded-lg text-muted hover:text-live hover:bg-live/10 transition-colors"
         >
           <X size={15} />
         </button>

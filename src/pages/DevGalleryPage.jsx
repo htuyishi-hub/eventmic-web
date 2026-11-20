@@ -38,7 +38,7 @@ export function DevGalleryPage() {
               </span>
               <h1 className="text-base font-black text-white tracking-tight">DM Design Gallery</h1>
             </div>
-            <p className="text-[11px] text-muted">Static preview of all roles & edge states side-by-side</p>
+            <p className="text-xs text-muted">Static preview of all roles & edge states side-by-side</p>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ export function DevGalleryPage() {
               >
                 <Icon size={13} />
                 <span>{f.label}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-muted'}`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-xs ${isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-muted'}`}>
                   {f.count}
                 </span>
               </button>

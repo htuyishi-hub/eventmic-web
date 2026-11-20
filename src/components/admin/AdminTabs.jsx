@@ -39,7 +39,7 @@ export function AdminTabs({ queue = [], onGrant, onDrop, onOpenQr }) {
         <Tabs tabs={tabDefs} activeTab={activeTab} onChange={setActiveTab} className="flex-1" />
         {fairModeActive && (
           <span
-            className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-live/15 text-live border border-live/30 flex-shrink-0"
+            className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-live/15 text-live border border-live/30 flex-shrink-0"
             title="Fair Mode prioritizes attendees who haven't spoken yet"
           >
             <Scale size={11} />

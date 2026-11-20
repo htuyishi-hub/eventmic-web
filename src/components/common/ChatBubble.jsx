@@ -5,7 +5,7 @@ export function ChatBubble({ message, isFromAdmin = false, timestamp, authorName
 
   return (
     <div className={`flex flex-col ${isFromAdmin ? 'items-start' : 'items-end'} space-y-1 text-xs my-1.5`}>
-      <div className="flex items-center gap-1.5 text-[10px] text-muted px-1 font-mono">
+      <div className="flex items-center gap-1.5 text-xs text-muted px-1 font-mono">
         <span className="font-bold text-white">{authorName || (isFromAdmin ? 'Admin' : 'Speaker')}</span>
         {timeStr && <span>• {timeStr}</span>}
       </div>

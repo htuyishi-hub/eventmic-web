@@ -11,11 +11,11 @@ export function LaptopFrame({ title, stateLabel, badgeColor = 'bg-accent', child
             <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
           </div>
-          <span className="ml-3 font-mono text-[11px] text-muted truncate">https://eventmic.live/admin</span>
+          <span className="ml-3 font-mono text-xs text-muted truncate">https://eventmic.live/admin</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase ${badgeColor}`}>
+          <span className={`px-2 py-0.5 rounded text-xs font-bold text-white uppercase ${badgeColor}`}>
             {stateLabel}
           </span>
           <span className="text-xs font-bold text-white">{title}</span>

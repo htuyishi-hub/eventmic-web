@@ -44,7 +44,7 @@ export function FloorRulesSection() {
             <Zap size={13} className="text-rose-400" />
             <span>Allow Urgent Blips</span>
           </div>
-          <p className="text-[11px] text-muted">Audience can trigger a 5s clarification interruption</p>
+          <p className="text-xs text-muted">Audience can trigger a 5s clarification interruption</p>
         </div>
         <button
           type="button"
@@ -88,7 +88,7 @@ export function FloorRulesSection() {
             <Clock size={13} className="text-accent" />
             <span>Scheduled End Time</span>
           </span>
-          <p className="text-[11px] text-muted">Fair mode auto-triggers before this time</p>
+          <p className="text-xs text-muted">Fair mode auto-triggers before this time</p>
         </div>
         <input
           type="time"

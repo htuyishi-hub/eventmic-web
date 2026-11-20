@@ -24,14 +24,14 @@ export function UrgentConfirmSheet({ isOpen, onClose, onConfirm }) {
           <AlertTriangle size={18} className="flex-shrink-0 mt-0.5 text-rose-400" />
           <div className="space-y-0.5">
             <span className="font-bold block">Interrupt Speaker (5 Seconds Max)</span>
-            <span className="text-[11px] opacity-90 leading-relaxed block">
+            <span className="text-xs opacity-90 leading-relaxed block">
               Urgent blips duck the stage speaker's microphone to alert the room of sound issues or critical questions.
             </span>
           </div>
         </div>
 
         <div>
-          <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-2">
+          <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
             Select Urgent Issue
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -50,7 +50,7 @@ export function UrgentConfirmSheet({ isOpen, onClose, onConfirm }) {
                   }`}
                 >
                   <Icon size={16} className={isSelected ? 'text-rose-400' : 'text-muted'} />
-                  <span className="text-[11px] font-bold">{r.label}</span>
+                  <span className="text-xs font-bold">{r.label}</span>
                 </button>
               );
             })}

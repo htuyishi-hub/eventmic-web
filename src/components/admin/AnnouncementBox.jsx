@@ -25,7 +25,7 @@ export function AnnouncementBox() {
           <Megaphone size={14} className="text-accent" />
           <span>Venue Announcement Banner</span>
         </div>
-        <span className="text-[10px] text-muted">Broadcasts to all devices</span>
+        <span className="text-xs text-muted">Broadcasts to all devices</span>
       </div>
 
       {/* Active Broadcast or Preview */}
@@ -50,7 +50,7 @@ export function AnnouncementBox() {
             <button
               type="button"
               onClick={() => setType('info')}
-              className={`p-1.5 rounded-lg border text-[11px] font-bold ${
+              className={`p-1.5 rounded-lg border text-xs font-bold ${
                 type === 'info' ? 'bg-accent/20 border-accent text-accent' : 'bg-background border-border text-muted'
               }`}
               title="Informational announcement"
@@ -60,7 +60,7 @@ export function AnnouncementBox() {
             <button
               type="button"
               onClick={() => setType('warning')}
-              className={`p-1.5 rounded-lg border text-[11px] font-bold ${
+              className={`p-1.5 rounded-lg border text-xs font-bold ${
                 type === 'warning' ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-background border-border text-muted'
               }`}
               title="Urgent warning announcement"

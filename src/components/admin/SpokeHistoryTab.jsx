@@ -17,7 +17,7 @@ function SpokeRow({ item }) {
             <span className="text-sm font-bold text-white truncate max-w-[140px]">{item.name}</span>
             <ReasonBadge reason={item.reason || 'question'} size="xs" />
           </div>
-          <div className="text-[11px] text-muted font-mono mt-1 flex items-center gap-2">
+          <div className="text-xs text-muted font-mono mt-1 flex items-center gap-2">
             <span className="flex items-center gap-1 text-accent">
               <Clock size={11} />
               {item.durationSeconds || Math.round((item.endedAt - item.startedAt) / 1000)}s speaking

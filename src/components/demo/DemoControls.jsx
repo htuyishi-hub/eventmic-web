@@ -24,7 +24,7 @@ export function DemoControls() {
               <Sparkles size={14} />
               <span>Demo Scenario Simulator</span>
             </div>
-            <span className="text-[10px] font-mono bg-accent/20 text-accent px-1.5 py-0.5 rounded">DEMO MODE</span>
+            <span className="text-xs font-mono bg-accent/20 text-accent px-1.5 py-0.5 rounded">DEMO MODE</span>
           </div>
 
           <div className="space-y-1.5">
@@ -41,7 +41,7 @@ export function DemoControls() {
               <select
                 value={handReason}
                 onChange={(e) => setHandReason(e.target.value)}
-                className="bg-background border border-border text-white text-[11px] rounded-lg px-2 py-1.5 flex-1"
+                className="bg-background border border-border text-white text-xs rounded-lg px-2 py-1.5 flex-1"
               >
                 <option value="question">Question</option>
                 <option value="comment">Comment</option>
@@ -106,10 +106,10 @@ export function DemoControls() {
           </div>
 
           <div className="pt-2 border-t border-border/60 flex items-center justify-between">
-            <span className="text-[10px] text-muted flex items-center gap-1">
+            <span className="text-xs text-muted flex items-center gap-1">
               <FastForward size={12} /> Speed
             </span>
-            <div className="flex items-center gap-1 font-mono text-[10px]">
+            <div className="flex items-center gap-1 font-mono text-xs">
               {[1, 2, 5, 10].map(m => (
                 <button
                   key={m}

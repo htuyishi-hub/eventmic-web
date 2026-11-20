@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, Copy, Check, Settings, LogOut, Users, MessageSquare } from 'lucide-react';
+import { QrCode, Copy, Check, Settings, LogOut, Users, MessageSquare, Activity, Megaphone } from 'lucide-react';
 import { DMMark } from '../brand/DMLogo.jsx';
 import { ConnectionBadge } from './ConnectionBadge.jsx';
 import { Button } from '../ui/Button.jsx';
@@ -13,7 +13,10 @@ export function SessionBar({
   onOpenQr,
   onOpenSettings,
   onOpenMessages,
-  onEndSessionClick
+  onEndSessionClick,
+  onOpenDiagnostics,
+  onOpenAnnounce,
+  onAir = false
 }) {
   const [copied, setCopied] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(0);
@@ -43,7 +46,7 @@ export function SessionBar({
     <header className="h-16 px-4 sm:px-6 bg-surface border-b border-border flex items-center justify-between gap-4 flex-shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex items-center gap-2 flex-shrink-0 text-foreground" aria-label="DM">
-          <DMMark size={30} />
+          <DMMark size={30} recording={onAir} />
           <span className="font-extrabold tracking-wider text-base hidden sm:inline">DM</span>
         </div>
         <div className="min-w-0">
@@ -53,9 +56,8 @@ export function SessionBar({
             </h1>
             <ConnectionBadge state={connectionState} />
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted font-mono">
-            <span>Session: {session?.code}</span>
-            <span>•</span>
+          <div className="flex items-center gap-2 text-xs text-muted font-mono">
+            <span>Session time</span>
             <span className="tabular-nums">{formatDuration(sessionDuration)}</span>
           </div>
         </div>
@@ -74,22 +76,48 @@ export function SessionBar({
           variant="secondary"
           size="sm"
           onClick={handleCopyLink}
-          className="gap-1.5 text-xs py-1.5 hidden sm:inline-flex"
+          className="gap-2 font-mono hidden sm:inline-flex"
+          title="Copy join link"
+          aria-label={`Session code ${session?.code}. Copy join link`}
         >
-          {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
-          <span>{copied ? 'Copied' : 'Copy Link'}</span>
+          <span className="tracking-[0.2em] font-bold text-foreground">{session?.code}</span>
+          {copied ? <Check size={14} className="text-success" /> : <Copy size={14} className="text-muted" />}
         </Button>
+
+        {onOpenAnnounce && (
+          <button
+            type="button"
+            onClick={onOpenAnnounce}
+            title="Venue Announcement (A)"
+            aria-label="Announcement"
+            className="min-w-[44px] min-h-[44px] grid place-items-center rounded-xl bg-background border border-border text-muted hover:text-white hover:border-accent transition-colors"
+          >
+            <Megaphone size={18} />
+          </button>
+        )}
+
+        {onOpenDiagnostics && (
+          <button
+            type="button"
+            onClick={onOpenDiagnostics}
+            title="Diagnostics (D)"
+            aria-label="Diagnostics"
+            className="min-w-[44px] min-h-[44px] grid place-items-center rounded-xl bg-background border border-border text-muted hover:text-white hover:border-accent transition-colors"
+          >
+            <Activity size={18} />
+          </button>
+        )}
 
         {onOpenMessages && (
           <button
             type="button"
             onClick={onOpenMessages}
             title="Backstage Messages"
-            className="relative p-2 rounded-xl bg-background border border-border text-muted hover:text-white hover:border-accent transition-colors"
+            className="relative min-w-[44px] min-h-[44px] grid place-items-center rounded-xl bg-background border border-border text-muted hover:text-white hover:border-accent transition-colors"
           >
             <MessageSquare size={17} />
             {unreadMessages > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent text-white font-bold text-[9px] flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent text-white font-bold text-xs flex items-center justify-center animate-pulse">
                 {unreadMessages}
               </span>
             )}
@@ -111,7 +139,7 @@ export function SessionBar({
           onClick={onOpenSettings}
           title="Audio & Stage Settings"
           aria-label="Settings"
-          className="p-2 rounded-xl bg-background border border-border text-muted hover:text-white hover:border-accent transition-colors"
+          className="min-w-[44px] min-h-[44px] grid place-items-center rounded-xl bg-background border border-border text-muted hover:text-white hover:border-accent transition-colors"
         >
           <Settings size={18} />
         </button>

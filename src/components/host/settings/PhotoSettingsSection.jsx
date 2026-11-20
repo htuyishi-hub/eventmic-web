@@ -27,7 +27,7 @@ export function PhotoSettingsSection() {
           <Camera size={16} className="text-accent" />
           <span>Temporary Profile Photos</span>
         </div>
-        {saving && <span className="text-[10px] text-muted animate-pulse">Saving...</span>}
+        {saving && <span className="text-xs text-muted animate-pulse">Saving...</span>}
       </div>
 
       <p className="text-xs text-muted leading-relaxed">
@@ -48,7 +48,7 @@ export function PhotoSettingsSection() {
             <Eye size={13} className={photosMode === 'speaker_only' ? 'text-accent' : 'text-muted'} />
             <span>Speaker Only</span>
           </div>
-          <p className="text-[10px] opacity-80 leading-normal">
+          <p className="text-xs opacity-80 leading-normal">
             Attendees see only the live speaker's photo. Organizers see all.
           </p>
         </button>
@@ -66,7 +66,7 @@ export function PhotoSettingsSection() {
             <Image size={13} className={photosMode === 'on' ? 'text-accent' : 'text-muted'} />
             <span>All Visible</span>
           </div>
-          <p className="text-[10px] opacity-80 leading-normal">
+          <p className="text-xs opacity-80 leading-normal">
             All attendees and organizers see participant photos.
           </p>
         </button>
@@ -84,7 +84,7 @@ export function PhotoSettingsSection() {
             <EyeOff size={13} className={photosMode === 'off' ? 'text-live' : 'text-muted'} />
             <span>Disabled</span>
           </div>
-          <p className="text-[10px] opacity-80 leading-normal">
+          <p className="text-xs opacity-80 leading-normal">
             Photos are disabled. Existing photos are hidden and uploads blocked.
           </p>
         </button>

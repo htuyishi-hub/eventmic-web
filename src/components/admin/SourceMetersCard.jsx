@@ -15,8 +15,8 @@ export function SourceMetersCard({ liveLevels, onMuteSource }) {
   return (
     <div className="bg-surface border border-border rounded-xl p-3 space-y-2.5">
       <div className="flex items-center justify-between pb-1.5 border-b border-border/50">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-white">Source Audio Chains</span>
-        <span className="text-[10px] text-muted font-mono">Multi-source Web Audio</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-white">Source Audio Chains</span>
+        <span className="text-xs text-muted font-mono">Multi-source Web Audio</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -33,7 +33,7 @@ export function SourceMetersCard({ liveLevels, onMuteSource }) {
                   size="sm"
                   variant={s.muted ? 'danger' : 'ghost'}
                   onClick={() => onMuteSource?.(key, !s.muted)}
-                  className="py-0.5 px-2 text-[10px] h-6"
+                  className="py-0.5 px-2 text-xs h-6"
                   title={`${s.muted ? 'Unmute' : 'Instant Mute'} ${label}`}
                 >
                   {s.muted ? <MicOff size={11} /> : <Mic size={11} />}
@@ -42,7 +42,7 @@ export function SourceMetersCard({ liveLevels, onMuteSource }) {
               </div>
 
               <div className="space-y-0.5">
-                <div className="flex justify-between text-[9px] font-mono text-muted">
+                <div className="flex justify-between text-xs font-mono text-muted">
                   <span>LEVEL</span>
                   <span>{s.muted ? 'MUTED' : `${Math.round(s.in * 100)}%`}</span>
                 </div>

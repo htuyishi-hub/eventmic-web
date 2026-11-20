@@ -51,7 +51,7 @@ export function ReasonBadge({ reason = 'question', className = '', showIcon = tr
   const config = REASON_CONFIG[norm] || REASON_CONFIG.question;
   const Icon = config.icon;
   const iconSize = size === 'xs' ? 10 : size === 'lg' ? 14 : 11;
-  const textClass = size === 'xs' ? 'text-[9px] px-1.5 py-0.5' : size === 'lg' ? 'text-xs px-2.5 py-1' : 'text-[10px] px-2 py-0.5';
+  const textClass = size === 'xs' ? 'text-xs px-1.5 py-0.5' : size === 'lg' ? 'text-xs px-2.5 py-1' : 'text-xs px-2 py-0.5';
 
   return (
     <span

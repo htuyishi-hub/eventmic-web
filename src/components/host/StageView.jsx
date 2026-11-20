@@ -20,8 +20,16 @@ export function StageView({
   onToggleMute,
   queueLength = 0,
   onGrantNext,
-  nextAttendeeName
+  nextAttendeeName,
+  nextRaisedAt
 }) {
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  useEffect(() => {
+    if (!confirmEnd) return undefined;
+    const t = setTimeout(() => setConfirmEnd(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmEnd]);
+  useEffect(() => { setConfirmEnd(false); }, [floor?.id]);
   const [speakingSeconds, setSpeakingSeconds] = useState(0);
   const avatarSrc = useResolvedAvatarSrc(floor);
 
@@ -82,7 +90,7 @@ export function StageView({
 
             <div className="space-y-1">
               <div className="flex items-center justify-center gap-2">
-                <span className="text-[11px] uppercase tracking-widest text-muted font-bold">Current Speaker</span>
+                <span className="text-xs uppercase tracking-widest text-muted font-bold">Current Speaker</span>
                 <RoleBadge role={floor.role || floor.mode || 'attendee'} />
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight break-words">{floor.name}</h1>
@@ -93,7 +101,7 @@ export function StageView({
               <div className="grid grid-cols-2 gap-3">
                 {/* Input Meter */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono text-muted">
+                  <div className="flex items-center justify-between text-xs font-mono text-muted">
                     <span>MIC IN</span>
                     <span>{isMuted ? 'MUTED' : `${Math.round(inputLevel * 100)}%`}</span>
                   </div>
@@ -102,15 +110,15 @@ export function StageView({
 
                 {/* Output Meter with Clip and Limiter Lights */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono">
+                  <div className="flex items-center justify-between text-xs font-mono">
                     <span className="text-muted">OUTPUT</span>
                     <div className="flex items-center gap-1.5">
-                      <span className={`px-1 py-0.2 rounded text-[9px] font-bold ${
+                      <span className={`px-1 py-0.2 rounded text-xs font-bold ${
                         isLimiterActive ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'text-muted/40'
                       }`}>
                         LIM
                       </span>
-                      <span className={`px-1 py-0.2 rounded text-[9px] font-bold transition-all ${
+                      <span className={`px-1 py-0.2 rounded text-xs font-bold transition-all ${
                         isClipping ? 'bg-live text-white shadow-sm shadow-live animate-pulse' : 'text-muted/40'
                       }`}>
                         CLIP
@@ -151,42 +159,50 @@ export function StageView({
         )}
       </div>
 
-      {/* Bottom Stage Control Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border">
+      {/* Bottom Stage Control Grid: Grant Next is the one primary action */}
+      <div className="space-y-3 pt-3 border-t border-border">
         <Button
           variant="primary"
           size="lg"
           disabled={queueLength === 0}
           onClick={onGrantNext}
-          className="flex-col gap-0.5 sm:col-span-1"
+          className="w-full min-h-[64px] flex-col gap-0.5"
         >
-          <span className="text-sm font-extrabold uppercase tracking-wider">Grant Next (G)</span>
-          <span className="text-[10px] font-normal opacity-80 truncate max-w-[180px]">
-            {nextAttendeeName ? `Next: ${nextAttendeeName}` : 'Queue empty'}
+          <span className="text-lg font-extrabold tracking-wide">Grant next <kbd className="ml-1 px-1.5 rounded bg-white/15 text-xs font-mono">G</kbd></span>
+          <span className="text-xs font-normal opacity-90 truncate max-w-full tabular-nums">
+            {queueLength === 0
+              ? 'No hands raised'
+              : `${nextAttendeeName ? `Next: ${nextAttendeeName}` : `${queueLength} waiting`}${nextRaisedAt ? ` · ${formatDuration((Date.now() - nextRaisedAt) / 1000)}` : ''}`}
           </span>
         </Button>
 
-        <Button
-          variant="live"
-          size="lg"
-          disabled={!floor}
-          onClick={onEndSpeaker}
-          className="gap-2 sm:col-span-1 uppercase tracking-wider text-sm font-extrabold"
-        >
-          <PhoneOff size={18} />
-          <span>End Floor (Esc)</span>
-        </Button>
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant={isMuted ? 'warning' : 'secondary'}
+            size="lg"
+            disabled={!floor}
+            onClick={onToggleMute}
+            className="gap-2 font-bold"
+          >
+            {isMuted ? <Mic size={18} /> : <MicOff size={18} />}
+            <span>{isMuted ? 'Unmute' : 'Mute'} <kbd className="px-1 rounded bg-white/10 text-xs font-mono">M</kbd></span>
+          </Button>
 
-        <Button
-          variant={isMuted ? 'warning' : 'secondary'}
-          size="lg"
-          disabled={!floor}
-          onClick={onToggleMute}
-          className="gap-2 sm:col-span-1 uppercase tracking-wider text-sm font-extrabold"
-        >
-          {isMuted ? <Mic size={18} /> : <MicOff size={18} />}
-          <span>{isMuted ? 'Unmute (M)' : 'Mute Host (M)'}</span>
-        </Button>
+          {/* Destructive: two-step confirm so a stray click cannot cut a speaker */}
+          <Button
+            variant={confirmEnd ? 'live' : 'secondary'}
+            size="lg"
+            disabled={!floor}
+            onClick={() => {
+              if (confirmEnd) { setConfirmEnd(false); onEndSpeaker?.(); }
+              else setConfirmEnd(true);
+            }}
+            className={`gap-2 font-bold ${confirmEnd ? '' : 'text-live'}`}
+          >
+            <PhoneOff size={18} />
+            <span>{confirmEnd ? 'Confirm end' : 'End floor'}</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

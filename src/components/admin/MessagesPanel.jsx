@@ -24,7 +24,7 @@ export function MessagesPanel({ onClose }) {
           <MessageSquare size={16} className="text-accent" />
           <h3 className="text-xs font-bold uppercase tracking-wider text-white">Speaker Backstage Chat</h3>
         </div>
-        <span className="text-[10px] text-muted font-mono">{messages.length} messages</span>
+        <span className="text-xs text-muted font-mono">{messages.length} messages</span>
       </div>
 
       {/* Messages Thread */}
@@ -55,7 +55,7 @@ export function MessagesPanel({ onClose }) {
               key={qr}
               type="button"
               onClick={() => handleSend(qr)}
-              className="px-2.5 py-1 rounded-lg bg-background hover:bg-surface border border-border text-[11px] font-bold text-accent whitespace-nowrap transition-colors"
+              className="px-2.5 py-1 rounded-lg bg-background hover:bg-surface border border-border text-xs font-bold text-accent whitespace-nowrap transition-colors"
             >
               {qr}
             </button>

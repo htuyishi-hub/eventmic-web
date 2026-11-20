@@ -27,7 +27,7 @@ export function ConnectModeSection() {
           <Wifi size={16} className="text-accent" />
           <span>Principal LiveKit Connect Mode</span>
         </div>
-        {saving && <span className="text-[10px] text-muted animate-pulse">Saving...</span>}
+        {saving && <span className="text-xs text-muted animate-pulse">Saving...</span>}
       </div>
 
       <p className="text-xs text-muted leading-relaxed">
@@ -48,7 +48,7 @@ export function ConnectModeSection() {
             <Zap size={14} className={mode === 'on_demand' ? 'text-accent' : 'text-muted'} />
             <span>On-Demand (Default)</span>
           </div>
-          <p className="text-[10px] opacity-80 leading-normal">
+          <p className="text-xs opacity-80 leading-normal">
             Connects to WebRTC only when taking floor or on-deck. Saves cloud minutes.
           </p>
         </button>
@@ -66,7 +66,7 @@ export function ConnectModeSection() {
             <Wifi size={14} className={mode === 'always' ? 'text-accent' : 'text-muted'} />
             <span>Always Connected</span>
           </div>
-          <p className="text-[10px] opacity-80 leading-normal">
+          <p className="text-xs opacity-80 leading-normal">
             Principals maintain active WebRTC connection for the whole session.
           </p>
         </button>

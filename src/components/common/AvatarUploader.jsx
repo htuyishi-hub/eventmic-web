@@ -170,7 +170,7 @@ export function AvatarUploader({ currentSrc, onSave, onRemove, onCancel }) {
         )}
       </div>
 
-      <p className="text-[11px] text-muted leading-relaxed px-2">
+      <p className="text-xs text-muted leading-relaxed px-2">
         {CONSENT_TEXT}
       </p>
 

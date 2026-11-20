@@ -73,7 +73,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
               className="ring-4 ring-accent/30"
             />
             <div className="space-y-0.5 text-center">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-accent font-bold">
+              <span className="text-xs font-mono uppercase tracking-widest text-accent font-bold">
                 {floor.holderRole === 'principal' ? 'Stage Speaker' : 'Attendee on the Floor'}
               </span>
               <h3 className="text-base font-bold text-white">{currentSpeaker.name}</h3>
@@ -97,7 +97,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
       {/* Bottom Action Area */}
       <div className="space-y-3 pb-safe">
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-muted text-center mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted text-center mb-2">
             Reason for Speaking
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -143,7 +143,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
           </Button>
         )}
 
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted text-center">
+        <div className="flex items-center justify-center gap-1.5 text-xs text-muted text-center">
           <ShieldCheck size={14} className="text-accent flex-shrink-0" />
           <span>Your microphone stays off until granted the floor.</span>
         </div>

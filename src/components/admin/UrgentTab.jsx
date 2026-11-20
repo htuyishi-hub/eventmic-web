@@ -19,7 +19,7 @@ function UrgentItem({ req, onGrant, onDismiss }) {
             <span className="text-sm font-bold text-white truncate max-w-[140px]">{req.name}</span>
             <ReasonBadge reason={req.reason || 'urgent'} />
           </div>
-          <div className="text-[11px] text-muted font-mono mt-0.5">
+          <div className="text-xs text-muted font-mono mt-0.5">
             Requested: {formatWait(req.requestedAt)}
           </div>
         </div>
@@ -40,7 +40,7 @@ function UrgentItem({ req, onGrant, onDismiss }) {
         <button
           type="button"
           onClick={() => onDismiss(req.id)}
-          className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition-colors"
+          className="min-w-[44px] min-h-[44px] grid place-items-center rounded-lg text-muted hover:text-white hover:bg-surface transition-colors"
           title="Dismiss"
         >
           <X size={15} />
@@ -70,7 +70,7 @@ export function UrgentTab({ onGrantUrgent, onDismissUrgent }) {
           <Zap size={22} className="opacity-40" />
         </div>
         <p className="text-xs font-bold text-white">No urgent interruptions</p>
-        <p className="text-[11px] text-muted max-w-xs mt-1">
+        <p className="text-xs text-muted max-w-xs mt-1">
           When an attendee sends an urgent question or sound issue, it prioritizes here with a 5-second turn cap.
         </p>
       </div>

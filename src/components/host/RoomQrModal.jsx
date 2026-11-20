@@ -44,7 +44,7 @@ export function RoomQrModal({ isOpen, onClose, code, sessionName }) {
         {/* Session Code Badge */}
         <div className="w-full flex items-center justify-between p-3.5 bg-background border border-border rounded-xl mb-4">
           <div className="text-left">
-            <span className="block text-[10px] uppercase font-bold text-muted tracking-wider">
+            <span className="block text-xs uppercase font-bold text-muted tracking-wider">
               Session Code
             </span>
             <span className="text-xl font-mono font-black tracking-widest text-accent">
@@ -63,7 +63,7 @@ export function RoomQrModal({ isOpen, onClose, code, sessionName }) {
           </Button>
         </div>
 
-        <p className="text-[11px] text-muted font-mono break-all px-2">
+        <p className="text-xs text-muted font-mono break-all px-2">
           {joinUrl}
         </p>
       </div>

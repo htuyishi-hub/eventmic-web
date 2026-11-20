@@ -87,7 +87,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
               {sc.session?.name || 'Speaker Stage'}
             </h1>
           </div>
-          <p className="text-[11px] text-muted mt-0.5">Speaker Control Station</p>
+          <p className="text-xs text-muted mt-0.5">Speaker Control Station</p>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -99,7 +99,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
           >
             <MessageSquare size={16} />
             {messages?.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-accent text-[9px] font-bold text-white flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-accent text-xs font-bold text-white flex items-center justify-center">
                 {messages.length}
               </span>
             )}
@@ -161,7 +161,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
           <button
             type="button"
             onClick={() => setQuestionsOpen(v => !v)}
-            className="flex items-center gap-1 text-[11px] font-bold text-muted hover:text-white"
+            className="flex items-center gap-1 text-xs font-bold text-muted hover:text-white"
           >
             {questionsOpen ? <CheckCircle2 size={13} className="text-emerald-400" /> : <XCircle size={13} className="text-muted" />}
             <span>{questionsOpen ? 'Q&A Active' : 'Q&A Closed'}</span>
@@ -192,7 +192,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
         </React.Suspense>
       )}
 
-      <footer className="pt-2 text-center text-[10px] text-muted/60 font-mono">
+      <footer className="pt-2 text-center text-xs text-muted/60 font-mono">
         DM Speaker v{__APP_VERSION__}
       </footer>
     </div>

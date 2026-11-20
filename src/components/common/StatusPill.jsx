@@ -18,7 +18,7 @@ export function StatusPill({ status = 'idle', className = '', size = 'sm' }) {
   const config = STATUS_CONFIG[norm] || STATUS_CONFIG.idle;
   const Icon = config.icon;
   const iconSize = size === 'xs' ? 9 : 11;
-  const textClass = size === 'xs' ? 'text-[9px] px-1.5 py-0.5' : 'text-[10px] px-2 py-0.5';
+  const textClass = size === 'xs' ? 'text-xs px-1.5 py-0.5' : 'text-xs px-2 py-0.5';
 
   return (
     <span

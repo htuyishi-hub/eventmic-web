@@ -132,7 +132,7 @@ export function SpeakerAudioPanel({ transport, isOnFloor }) {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <label className="text-[11px] font-bold uppercase text-muted tracking-wider block mb-1">
+          <label className="text-xs font-bold uppercase text-muted tracking-wider block mb-1">
             Use headset or lapel mic
           </label>
           <select
@@ -160,7 +160,7 @@ export function SpeakerAudioPanel({ transport, isOnFloor }) {
       </div>
 
       <div className="space-y-1">
-        <div className="flex justify-between text-[11px] text-muted">
+        <div className="flex justify-between text-xs text-muted">
           <span>{isOnFloor ? 'Live Mic Level' : isTesting ? 'Testing Mic Level' : 'Mic Meter'}</span>
           <span className="font-mono">{level}%</span>
         </div>

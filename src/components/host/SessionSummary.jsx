@@ -34,7 +34,7 @@ export function SessionSummary({
             <div className="text-xl font-black text-white font-mono tabular-nums">
               {formatDuration(stats.durationSeconds)}
             </div>
-            <div className="text-[11px] text-muted uppercase font-bold tracking-wider mt-1">
+            <div className="text-xs text-muted uppercase font-bold tracking-wider mt-1">
               Duration
             </div>
           </div>
@@ -44,7 +44,7 @@ export function SessionSummary({
             <div className="text-xl font-black text-white font-mono tabular-nums">
               {stats.speakersCount}
             </div>
-            <div className="text-[11px] text-muted uppercase font-bold tracking-wider mt-1">
+            <div className="text-xs text-muted uppercase font-bold tracking-wider mt-1">
               Speakers
             </div>
           </div>
@@ -54,7 +54,7 @@ export function SessionSummary({
             <div className="text-xl font-black text-white font-mono tabular-nums">
               {stats.totalHandsRaised}
             </div>
-            <div className="text-[11px] text-muted uppercase font-bold tracking-wider mt-1">
+            <div className="text-xs text-muted uppercase font-bold tracking-wider mt-1">
               Hands Raised
             </div>
           </div>

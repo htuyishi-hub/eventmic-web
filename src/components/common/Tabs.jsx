@@ -28,7 +28,7 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }) {
             {Icon && <Icon size={14} className={isActive ? 'text-accent' : 'opacity-70'} aria-hidden="true" />}
             <span>{tab.label}</span>
             {tab.badge !== undefined && tab.badge > 0 && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+              <span className={`px-1.5 py-0.2 rounded-full text-xs font-mono font-bold ${
                 tab.badgeVariant === 'urgent'
                   ? 'bg-rose-500 text-white animate-pulse'
                   : 'bg-accent text-white'
@@ -37,7 +37,7 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }) {
               </span>
             )}
             {tab.shortcut && (
-              <kbd className="hidden sm:inline-block ml-1 text-[9px] font-mono text-muted/60 opacity-60">
+              <kbd className="hidden sm:inline-block ml-1 text-xs font-mono text-muted/60 opacity-60">
                 {tab.shortcut}
               </kbd>
             )}

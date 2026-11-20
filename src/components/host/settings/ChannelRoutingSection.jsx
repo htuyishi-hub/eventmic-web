@@ -23,7 +23,7 @@ export function ChannelRoutingSection({
           <GitFork size={16} className="text-accent" />
           <span>Channel Routing (Mono to Output)</span>
         </div>
-        <span className="text-[10px] font-mono text-muted">
+        <span className="text-xs font-mono text-muted">
           {maxChannelCount} Destination {maxChannelCount === 1 ? 'Ch' : 'Chs'}
         </span>
       </div>
@@ -48,7 +48,7 @@ export function ChannelRoutingSection({
               }`}
             >
               <div className="text-xs font-bold">{p.label}</div>
-              <div className="text-[10px] opacity-70 mt-0.5 truncate">{p.description}</div>
+              <div className="text-xs opacity-70 mt-0.5 truncate">{p.description}</div>
             </button>
           );
         })}
@@ -59,7 +59,7 @@ export function ChannelRoutingSection({
         <div className="space-y-2 pt-2 border-t border-border/50">
           <div className="text-xs font-bold text-white flex items-center justify-between">
             <span>Discrete Hardware Channel</span>
-            <span className="text-[10px] text-accent font-normal">Advanced Output</span>
+            <span className="text-xs text-accent font-normal">Advanced Output</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {channelsList.map((ch) => {
@@ -82,7 +82,7 @@ export function ChannelRoutingSection({
           </div>
         </div>
       ) : (
-        <div className="p-2.5 rounded-xl bg-surface/50 border border-border/60 text-[11px] text-muted flex items-start gap-2">
+        <div className="p-2.5 rounded-xl bg-surface/50 border border-border/60 text-xs text-muted flex items-start gap-2">
           <Info size={14} className="flex-shrink-0 mt-0.5 text-muted" />
           <span>Stereo destination active. Multichannel routing (Ch 3+) requires a multichannel audio interface.</span>
         </div>

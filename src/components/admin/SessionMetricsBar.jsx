@@ -2,7 +2,7 @@ import React from 'react';
 import { Activity, Radio, Clock, Zap, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 
-export function SessionMetricsBar({ metrics, floor, principalQueue, onHandoverNext }) {
+export function SessionMetricsBar({ metrics, floor, principalQueue, onHandoverNext, cards = true, alerts = true }) {
   const m = metrics || {};
   const openSockets = m.openSockets ?? 0;
   const peakLivekit = m.peakLivekitConnections ?? 0;
@@ -15,15 +15,15 @@ export function SessionMetricsBar({ metrics, floor, principalQueue, onHandoverNe
   return (
     <div className="space-y-2">
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      {cards && (<div className="grid grid-cols-1 gap-3">
         <div className="bg-surface border border-border rounded-xl p-2.5 flex items-center gap-2.5">
           <div className="p-2 rounded-lg bg-accent/15 text-accent flex-shrink-0">
             <Radio size={15} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] uppercase font-bold text-muted truncate">LiveKit Conns</div>
+            <div className="text-xs uppercase font-bold text-muted truncate">LiveKit Conns</div>
             <div className="text-xs font-mono font-bold text-white">
-              {currentLivekit} <span className="text-muted text-[10px] font-normal">(pk {peakLivekit})</span>
+              {currentLivekit} <span className="text-muted text-xs font-normal">(pk {peakLivekit})</span>
             </div>
           </div>
         </div>
@@ -33,7 +33,7 @@ export function SessionMetricsBar({ metrics, floor, principalQueue, onHandoverNe
             <Clock size={15} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] uppercase font-bold text-muted truncate">WebRTC Usage</div>
+            <div className="text-xs uppercase font-bold text-muted truncate">WebRTC Usage</div>
             <div className="text-xs font-mono font-bold text-white">{webrtcMins} min</div>
           </div>
         </div>
@@ -43,7 +43,7 @@ export function SessionMetricsBar({ metrics, floor, principalQueue, onHandoverNe
             <Activity size={15} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] uppercase font-bold text-muted truncate">Active Sockets</div>
+            <div className="text-xs uppercase font-bold text-muted truncate">Active Sockets</div>
             <div className="text-xs font-mono font-bold text-white">{openSockets} online</div>
           </div>
         </div>
@@ -53,14 +53,16 @@ export function SessionMetricsBar({ metrics, floor, principalQueue, onHandoverNe
             <Zap size={15} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] uppercase font-bold text-muted truncate">Turn Latency</div>
+            <div className="text-xs uppercase font-bold text-muted truncate">Turn Latency</div>
             <div className="text-xs font-mono font-bold text-white">{latencyMs} ms</div>
           </div>
         </div>
       </div>
 
+      )}
+
       {/* Stage Audio Health Drop Warning */}
-      {floorHolderDropped && (
+      {alerts && floorHolderDropped && (
         <div className="p-3 rounded-xl bg-live/20 border border-live/40 flex items-center justify-between text-xs text-live">
           <div className="flex items-center gap-2">
             <AlertTriangle size={16} />

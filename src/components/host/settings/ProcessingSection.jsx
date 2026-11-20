@@ -21,7 +21,7 @@ export function ProcessingSection({
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <div className="text-xs font-bold text-white">High-Pass Filter (Low-Cut)</div>
-            <div className="text-[11px] text-muted">Eliminates stage rumble and mic handling noise</div>
+            <div className="text-xs text-muted">Eliminates stage rumble and mic handling noise</div>
           </div>
           <button
             type="button"
@@ -36,7 +36,7 @@ export function ProcessingSection({
 
         {highPass.enabled && (
           <div className="space-y-1 pt-1">
-            <div className="flex justify-between text-[11px] font-mono text-muted">
+            <div className="flex justify-between text-xs font-mono text-muted">
               <span>Cutoff Frequency</span>
               <span className="text-white font-bold">{highPass.hz} Hz</span>
             </div>
@@ -58,7 +58,7 @@ export function ProcessingSection({
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <div className="text-xs font-bold text-white">RMS Noise Gate</div>
-            <div className="text-[11px] text-muted">Mutes room ambience when attendee is not speaking</div>
+            <div className="text-xs text-muted">Mutes room ambience when attendee is not speaking</div>
           </div>
           <button
             type="button"
@@ -74,7 +74,7 @@ export function ProcessingSection({
         {gate.enabled && (
           <div className="space-y-3 pt-1">
             <div className="space-y-1">
-              <div className="flex justify-between text-[11px] font-mono text-muted">
+              <div className="flex justify-between text-xs font-mono text-muted">
                 <span>Threshold</span>
                 <span className="text-white font-bold">{gate.thresholdDb} dB</span>
               </div>
@@ -90,7 +90,7 @@ export function ProcessingSection({
             </div>
 
             <div className="space-y-1">
-              <div className="flex justify-between text-[11px] font-mono text-muted">
+              <div className="flex justify-between text-xs font-mono text-muted">
                 <span>Release Time</span>
                 <span className="text-white font-bold">{gate.releaseMs} ms</span>
               </div>
@@ -115,7 +115,7 @@ export function ProcessingSection({
             <ShieldCheck size={14} className="text-success" />
             <span>Brickwall Limiter (-3 dBFS)</span>
           </div>
-          <div className="text-[11px] text-muted">20:1 fast compression prevents PA distortion & clipping</div>
+          <div className="text-xs text-muted">20:1 fast compression prevents PA distortion & clipping</div>
         </div>
         <button
           type="button"

@@ -101,7 +101,7 @@ export function PrincipalsTab() {
       <div className="flex items-center justify-between pb-2 border-b border-border/60">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-white">Stage Speakers</h3>
-          <p className="text-[11px] text-muted">6-digit PIN required for /speaker sign-in</p>
+          <p className="text-xs text-muted">6-digit PIN required for /speaker sign-in</p>
         </div>
         {!isAdding && (
           <Button size="sm" variant="secondary" onClick={() => setIsAdding(true)} className="gap-1 text-xs py-1">

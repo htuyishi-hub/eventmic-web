@@ -76,7 +76,7 @@ export function TestToolsSection({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
           <span className="text-white font-semibold">1 kHz Sine Tone (-18 dBFS, 1.5s)</span>
-          <span className="text-[10px] font-mono text-muted">A440 Calibration</span>
+          <span className="text-xs font-mono text-muted">A440 Calibration</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -139,11 +139,11 @@ export function TestToolsSection({
           )}
         </div>
 
-        <p className="text-[11px] text-muted leading-relaxed">
+        <p className="text-xs text-muted leading-relaxed">
           Feeds host laptop mic through the full graph (filter, gate, limiter) to test speaker sound before the show.
         </p>
 
-        <div className="p-2.5 rounded-lg bg-warning/10 border border-warning/30 flex items-start gap-2 text-warning text-[11px]">
+        <div className="p-2.5 rounded-lg bg-warning/10 border border-warning/30 flex items-start gap-2 text-warning text-xs">
           <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
           <span>Warning: Wear headphones or turn down venue PA speakers to prevent acoustic feedback.</span>
         </div>

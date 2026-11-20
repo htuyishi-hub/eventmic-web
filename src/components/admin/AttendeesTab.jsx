@@ -18,12 +18,12 @@ function AttendeeRow({ att, onDeleteAvatar }) {
             <span className="font-bold text-white truncate max-w-[140px]">{att.name}</span>
             <StatusPill status={att.isQueued ? 'queued' : att.speakCount > 0 ? 'spoken' : 'idle'} size="xs" />
             {att.hasNotSpoken && (
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-live/15 text-live border border-live/30">
+              <span className="px-1.5 py-0.2 rounded text-xs font-bold bg-live/15 text-live border border-live/30">
                 1st time
               </span>
             )}
           </div>
-          <div className="text-[10px] text-muted font-mono mt-0.5 flex items-center gap-2">
+          <div className="text-xs text-muted font-mono mt-0.5 flex items-center gap-2">
             <span>Spoke: {att.speakCount} {att.speakCount === 1 ? 'time' : 'times'}</span>
             {att.joinedAt && (
               <span className="flex items-center gap-0.5">
@@ -84,7 +84,7 @@ export function AttendeesTab() {
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+              className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-colors ${
                 filter === f.id ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-white'
               }`}
             >
@@ -96,7 +96,7 @@ export function AttendeesTab() {
         <button
           type="button"
           onClick={() => setSortDesc(v => !v)}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-background border border-border text-muted hover:text-white text-[11px] font-bold"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-background border border-border text-muted hover:text-white text-xs font-bold"
           title="Toggle sort direction"
         >
           <ArrowUpDown size={12} />
