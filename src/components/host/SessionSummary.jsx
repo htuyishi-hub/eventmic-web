@@ -1,5 +1,6 @@
 import React from 'react';
-import { Award, Clock, Users, Mic, Plus } from 'lucide-react';
+import { Award, Clock, Users, Mic, Plus, Download } from 'lucide-react';
+import { DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 import { formatDuration } from '../../lib/time.js';
 
@@ -8,11 +9,28 @@ export function SessionSummary({
   stats = { durationSeconds: 0, speakersCount: 0, totalHandsRaised: 0 },
   onStartNewSession
 }) {
+  const handleExportCsv = () => {
+    const rows = [
+      ['Session Name', 'Session Code', 'Duration (s)', 'Total Speakers', 'Hands Raised'],
+      [session?.name || 'Live Session', session?.code || '', stats.durationSeconds || 0, stats.speakersCount || 0, stats.totalHandsRaised || 0]
+    ];
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dm-session-${session?.code || 'audit'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="w-full max-w-lg bg-surface border border-border rounded-2xl p-8 shadow-2xl text-center space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-success/20 border border-success/40 flex items-center justify-center text-success mx-auto shadow-inner">
-          <Award size={36} />
+        <div className="flex justify-center">
+          <DMLogo size={28} />
+        </div>
+        <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
+          <Award size={28} />
         </div>
 
         <div>
@@ -60,15 +78,26 @@ export function SessionSummary({
           </div>
         </div>
 
-        <Button
-          variant="primary"
-          size="huge"
-          onClick={onStartNewSession}
-          className="gap-2 w-full mt-4"
-        >
-          <Plus size={18} />
-          <span>Start New Session</span>
-        </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={handleExportCsv}
+            className="w-full gap-2"
+          >
+            <Download size={18} />
+            <span>Export CSV</span>
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={onStartNewSession}
+            className="w-full gap-2"
+          >
+            <Plus size={18} />
+            <span>New Session</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

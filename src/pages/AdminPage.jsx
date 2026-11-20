@@ -20,9 +20,9 @@ export function AdminPage() {
 
   const [endedStats, setEndedStats] = useState(null);
 
-  const handleStartSession = async ({ name }) => {
+  const handleStartSession = async ({ name, settings }) => {
     setEndedStats(null);
-    await createSession({ name });
+    await createSession({ name, settings });
   };
 
   const handleResumeSession = async (savedSession) => {

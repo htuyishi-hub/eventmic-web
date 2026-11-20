@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Mic, Play, RefreshCw, Trash2 } from 'lucide-react';
+import { Play, RefreshCw, Trash2 } from 'lucide-react';
+import { DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 
 const HOST_STORAGE_KEY = 'eventmic_host_session';
 
 export function CreateSession({ onStartSession, onResumeSession }) {
   const [sessionName, setSessionName] = useState('');
+  const [fairMode, setFairMode] = useState(true);
+  const [turnCap, setTurnCap] = useState(120);
+  const [photos, setPhotos] = useState('speaker_only');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +37,7 @@ export function CreateSession({ onStartSession, onResumeSession }) {
 
     try {
       setLoading(true);
-      await onStartSession({ name: trimmed });
+      await onStartSession({ name: trimmed, settings: { fairMode, turnCapSeconds: turnCap, photos } });
     } catch (err) {
       setError(err.message || 'Failed to create session');
     } finally {
@@ -51,12 +55,12 @@ export function CreateSession({ onStartSession, onResumeSession }) {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="w-full max-w-lg bg-surface border border-border rounded-2xl p-8 shadow-2xl">
-        <div className="w-14 h-14 rounded-2xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent mb-6 shadow-inner mx-auto">
-          <Mic className="w-7 h-7" />
+        <div className="flex justify-center mb-5">
+          <DMLogo size={32} />
         </div>
 
         <h1 className="text-2xl font-black text-center text-white uppercase tracking-wider mb-2">
-          Admin Control Center
+          Session Setup
         </h1>
         <p className="text-sm text-center text-muted mb-8">
           Launch a live Q&amp;A microphone room for your audience.
@@ -120,6 +124,51 @@ export function CreateSession({ onStartSession, onResumeSession }) {
                 {error}
               </p>
             )}
+          </div>
+
+          {/* Pre-event defaults so admin doesn't configure during live Q&A */}
+          <div className="pt-3 space-y-3 border-t border-border">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">Fair Mode (1st-time speakers first)</span>
+              <button
+                type="button"
+                onClick={() => setFairMode((v) => !v)}
+                className={`min-h-[44px] px-3.5 rounded-lg font-bold border transition-colors ${
+                  fairMode ? 'bg-blue-600 border-blue-600 text-white' : 'bg-background border-border text-muted'
+                }`}
+              >
+                {fairMode ? 'On' : 'Off'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">Turn Cap</span>
+                <select
+                  value={turnCap}
+                  onChange={(e) => setTurnCap(Number(e.target.value))}
+                  className="w-full min-h-[44px] px-3 rounded-xl bg-background border border-border text-sm text-white"
+                >
+                  <option value={60}>60s</option>
+                  <option value={120}>2 min</option>
+                  <option value={180}>3 min</option>
+                  <option value={300}>5 min</option>
+                </select>
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">Photos</span>
+                <select
+                  value={photos}
+                  onChange={(e) => setPhotos(e.target.value)}
+                  className="w-full min-h-[44px] px-3 rounded-xl bg-background border border-border text-sm text-white"
+                >
+                  <option value="speaker_only">Speaker Only</option>
+                  <option value="on">All Avatars</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           <Button
