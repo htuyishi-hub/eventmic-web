@@ -22,14 +22,12 @@ export function createTransport(options = {}) {
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const isUrlDemo = urlParams?.get('demo') === 'true' || urlParams?.get('transport') === 'demo';
     const savedTransport = typeof localStorage !== 'undefined' ? localStorage.getItem('eventmic_transport') : null;
-    if (isUrlDemo || savedTransport === 'demo') {
+    if (isUrlDemo) {
       type = 'demo';
-    } else if (!type && savedTransport) {
-      type = savedTransport;
-    }
+    } 
   }
 
-  type = (type || import.meta.env?.VITE_TRANSPORT || 'mock').toLowerCase();
+  type = (type || import.meta.env?.VITE_TRANSPORT || 'livekit').toLowerCase();
 
   if (import.meta.env.DEV && type === 'demo' && DemoTransportClass) {
     return new DemoTransportClass(options);
