@@ -276,14 +276,7 @@ export function PasscodeGate({ onUnlocked }) {
               </Button>
             </form>
 
-            <button
-              type="button"
-              onClick={() => { setMode('passcode'); setError(''); }}
-              className="mt-5 w-full min-h-[44px] text-xs font-semibold text-muted hover:text-white flex items-center justify-center gap-1.5"
-            >
-              <KeyRound size={13} />
-              <span>Use shared host passcode instead</span>
-            </button>
+
           </>
         ) : (
           <form onSubmit={handlePasscodeSubmit} className="space-y-4">
