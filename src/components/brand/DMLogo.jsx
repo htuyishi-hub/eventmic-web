@@ -1,200 +1,78 @@
 import React from 'react';
 
 /**
- * DM (Digital Microphone) Logo Component
- * 
- * Anatomy:
- * 1. Border-perfect short word "DM": precision 1.5px/2px geometric border enclosing "DM".
- * 2. WhatsApp-style Voice Inequality Waveform: 5 vertical pill bars tapering from large to small.
- * 3. Domain descriptor: "digital microphone 🎙️" (digitalmicrophone.com).
- * 
- * Principles:
- * - Dieter Rams / Teenage Engineering / Braun Industrial Functionalism.
- * - Zero "movie fiction" / sci-fi clutter. Clean, tactile, acoustic precision.
+ * DM logo mark — the supplied waveform symbol, rebuilt as vector.
+ * "DM" is NOT part of the mark; it is plain text placed after it (see DMLogo).
+ *
+ * recording=true animates each line independently like a live voice recording.
+ * Respects prefers-reduced-motion (animation is disabled).
  */
-export function DMLogo({
-  variant = 'mark', // 'mark' | 'full' | 'badge' | 'bars'
-  size = 'md',      // 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  animated = false,
-  showDomain = false,
-  className = '',
-  color = 'currentColor',
-}) {
-  const sizeMap = {
-    xs: 'h-5',
-    sm: 'h-6',
-    md: 'h-8',
-    lg: 'h-10',
-    xl: 'h-14',
-  };
+const BARS = [
+  // [x, y1, y2, animation duration (s), delay (s), min scale]
+  { k: 'a', x: 337, y1: 260, y2: 390, d: 0.9, s: 0.0, m: 0.3 },
+  { k: 'b', x: 462, y1: 90, y2: 285, d: 0.7, s: 0.15, m: 0.25 },
+  { k: 'c', x: 462, y1: 420, y2: 490, d: 1.1, s: 0.35, m: 0.4 },
+  { k: 'd', x: 505, y1: 220, y2: 380, d: 0.8, s: 0.05, m: 0.3 },
+  { k: 'e', x: 547, y1: 155, y2: 240, d: 1.0, s: 0.25, m: 0.35 },
+  { k: 'f', x: 590, y1: 292, y2: 318, d: 0.6, s: 0.1, m: 0.5 },
+  { k: 'g', x: 632, y1: 258, y2: 278, d: 0.85, s: 0.3, m: 0.5 },
+  { k: 'h', x: 678, y1: 277, y2: 293, d: 0.75, s: 0.2, m: 0.6 },
+];
 
-  const heightClass = sizeMap[size] || sizeMap.md;
+const CSS = `
+.dm-bar{transform-box:fill-box;transform-origin:center}
+.dm-rec .dm-bar{animation:dm-bounce var(--d) ease-in-out var(--s) infinite alternate}
+.dm-rec .dm-loop{transform-box:fill-box;transform-origin:center;animation:dm-bounce 1.3s ease-in-out 0s infinite alternate;--m:.85}
+@keyframes dm-bounce{from{transform:scaleY(var(--m,.3))}to{transform:scaleY(1.12)}}
+@media (prefers-reduced-motion:reduce){.dm-rec .dm-bar,.dm-rec .dm-loop{animation:none}}
+`;
 
-  if (variant === 'badge') {
-    return (
-      <svg
-        viewBox="0 0 48 36"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={`${heightClass} w-auto inline-block ${className}`}
-        role="img"
-        aria-label="DM Badge"
-      >
-        <rect x="2" y="2" width="44" height="32" rx="4" stroke={color} strokeWidth="2" fill="none" />
-        <text
-          x="24"
-          y="23"
-          fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif"
-          fontWeight="800"
-          fontSize="15"
-          textAnchor="middle"
-          fill={color}
-          letterSpacing="1"
-        >
-          DM
-        </text>
-      </svg>
-    );
-  }
-
-  if (variant === 'bars') {
-    return (
-      <svg
-        viewBox="0 0 44 36"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={`${heightClass} w-auto inline-block ${className}`}
-        role="img"
-        aria-label="DM Voice Waveform"
-      >
-        <rect
-          x="2"
-          y="4"
-          width="4"
-          height="28"
-          rx="2"
-          fill={color}
-          className={animated ? 'animate-[pulse_1.5s_ease-in-out_infinite]' : ''}
-        />
-        <rect
-          x="11"
-          y="8"
-          width="4"
-          height="20"
-          rx="2"
-          fill={color}
-          className={animated ? 'animate-[pulse_1.5s_ease-in-out_0.2s_infinite]' : ''}
-        />
-        <rect
-          x="20"
-          y="11"
-          width="4"
-          height="14"
-          rx="2"
-          fill={color}
-          className={animated ? 'animate-[pulse_1.5s_ease-in-out_0.4s_infinite]' : ''}
-        />
-        <rect
-          x="29"
-          y="13.5"
-          width="4"
-          height="9"
-          rx="2"
-          fill={color}
-          className={animated ? 'animate-[pulse_1.5s_ease-in-out_0.6s_infinite]' : ''}
-        />
-        <rect
-          x="38"
-          y="15.5"
-          width="4"
-          height="5"
-          rx="2"
-          fill={color}
-          className={animated ? 'animate-[pulse_1.5s_ease-in-out_0.8s_infinite]' : ''}
-        />
-      </svg>
-    );
-  }
-
-  if (variant === 'full' || showDomain) {
-    return (
-      <div className={`inline-flex items-center gap-3 select-none text-current ${className}`}>
-        <svg
-          viewBox="0 0 96 36"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={`${heightClass} w-auto flex-shrink-0`}
-          role="img"
-          aria-label="DM Logo"
-        >
-          {/* Border-perfect short word DM */}
-          <rect x="2" y="2" width="44" height="32" rx="4" stroke={color} strokeWidth="2" fill="none" />
-          <text
-            x="24"
-            y="23"
-            fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif"
-            fontWeight="800"
-            fontSize="15"
-            textAnchor="middle"
-            fill={color}
-            letterSpacing="1"
-          >
-            DM
-          </text>
-          
-          {/* WhatsApp-style voice inequality waveform */}
-          <rect x="54" y="4" width="4" height="28" rx="2" fill={color} />
-          <rect x="63" y="8" width="4" height="20" rx="2" fill={color} />
-          <rect x="72" y="11" width="4" height="14" rx="2" fill={color} />
-          <rect x="81" y="13.5" width="4" height="9" rx="2" fill={color} />
-          <rect x="90" y="15.5" width="4" height="5" rx="2" fill={color} />
-        </svg>
-
-        <div className="flex flex-col justify-center border-l border-white/15 dark:border-white/15 border-black/15 pl-3 leading-none">
-          <div className="flex items-center gap-1.5 font-semibold text-xs tracking-tight text-white dark:text-white text-neutral-900">
-            <span>digital microphone</span>
-            <span className="text-xs">🎙️</span>
-          </div>
-          <span className="text-[10px] tracking-wider uppercase font-mono text-neutral-400 mt-0.5">
-            digitalmicrophone.com
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // Default: Mark ([DM] + 5 WhatsApp waveform bars)
+export function DMMark({ recording = false, size = 32, color = 'currentColor', className = '', title = 'DM' }) {
   return (
     <svg
-      viewBox="0 0 96 36"
+      viewBox="310 60 435 450"
+      width={size}
+      height={size}
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={`${heightClass} w-auto inline-block ${className}`}
+      stroke={color}
+      strokeWidth="20"
+      strokeLinecap="round"
+      className={`${recording ? 'dm-rec' : ''} ${className}`}
       role="img"
-      aria-label="DM Logo"
+      aria-label={title}
     >
-      {/* Border-perfect short word DM */}
-      <rect x="2" y="2" width="44" height="32" rx="4" stroke={color} strokeWidth="2" fill="none" />
-      <text
-        x="24"
-        y="23"
-        fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif"
-        fontWeight="800"
-        fontSize="15"
-        textAnchor="middle"
-        fill={color}
-        letterSpacing="1"
-      >
-        DM
-      </text>
-      
-      {/* WhatsApp-style voice inequality waveform (starts bigger, ends small) */}
-      <rect x="54" y="4" width="4" height="28" rx="2" fill={color} />
-      <rect x="63" y="8" width="4" height="20" rx="2" fill={color} />
-      <rect x="72" y="11" width="4" height="14" rx="2" fill={color} />
-      <rect x="81" y="13.5" width="4" height="9" rx="2" fill={color} />
-      <rect x="90" y="15.5" width="4" height="5" rx="2" fill={color} />
+      <style>{CSS}</style>
+      {/* d-shaped loop: stadium outline + stem */}
+      <g className="dm-bar dm-loop" style={{ '--m': 0.85 }}>
+        <rect x="390" y="145" width="30" height="280" rx="15" />
+        <line x1="420" y1="105" x2="420" y2="200" />
+      </g>
+      {BARS.filter((b) => b.k !== 'h').map((b) => (
+        <line
+          key={b.k}
+          className="dm-bar"
+          x1={b.x}
+          y1={b.y1}
+          x2={b.x}
+          y2={b.y2}
+          style={{ '--d': `${b.d}s`, '--s': `${b.s}s`, '--m': b.m }}
+        />
+      ))}
+      <line className="dm-bar" x1="678" y1="277" x2="678" y2="293" style={{ '--d': '0.75s', '--s': '0.2s', '--m': 0.6 }} />
+      <circle cx="722" cy="286" r="0.1" strokeWidth="22" />
     </svg>
+  );
+}
+
+/** Mark followed by the plain text "DM". */
+export function DMLogo({ recording = false, size = 32, showText = true, color = 'currentColor', className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-2 select-none ${className}`} style={{ color }}>
+      <DMMark recording={recording} size={size} color={color} />
+      {showText && (
+        <span style={{ fontWeight: 800, fontSize: size * 0.62, letterSpacing: '0.04em', lineHeight: 1 }}>DM</span>
+      )}
+    </span>
   );
 }
 
