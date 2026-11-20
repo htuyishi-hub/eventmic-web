@@ -64,10 +64,13 @@ export class LiveKitTransport {
   }
 
   async endSession() {
-    if (this.code) await this.api.endSession(this.code);
-    localStorage.removeItem(HOST_STORAGE_KEY);
-    await this.disconnect();
-    this.emit('session', { code: this.code, name: this.sessionName, status: 'ended', createdAt: Date.now() });
+    try {
+      if (this.code) await this.api.endSession(this.code);
+    } finally {
+      localStorage.removeItem(HOST_STORAGE_KEY);
+      await this.disconnect();
+      this.emit('session', { code: this.code, name: this.sessionName, status: 'ended', createdAt: Date.now() });
+    }
   }
 
   async connect({ role, code, name, pin, inviteToken, passcode }) {
