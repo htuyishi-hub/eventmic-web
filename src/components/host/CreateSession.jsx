@@ -203,6 +203,13 @@ export function CreateSession({ onStartSession, onResumeSession }) {
           </Button>
 
           <Link
+            to="/check"
+            className="min-h-[44px] w-full inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background text-xs font-bold text-muted hover:text-white transition-colors"
+          >
+            <span>Sound Check (Speakers &amp; Amplifiers)</span>
+          </Link>
+
+          <Link
             to="/admin/schedule"
             className="min-h-[44px] w-full inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background text-xs font-bold text-muted hover:text-white transition-colors"
           >

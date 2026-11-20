@@ -7,6 +7,7 @@ import { AdminPage } from './pages/AdminPage.jsx';
 import { SpeakerPage } from './pages/SpeakerPage.jsx';
 import { JoinPage } from './pages/JoinPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
+import { SoundCheckPage } from './pages/SoundCheckPage.jsx';
 import { DMBootSplash } from './components/brand/DMBootSplash.jsx';
 
 const DevGalleryPage = import.meta.env.DEV
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/admin/schedule" element={<AdminPage />} />
             <Route path="/host" element={<Navigate to="/admin" replace />} />
             <Route path="/speaker" element={<SpeakerPage />} />
+            <Route path="/check" element={<SoundCheckPage />} />
             <Route path="/join/:code" element={<JoinPage />} />
             {import.meta.env.DEV && DevGalleryPage && (
               <Route
