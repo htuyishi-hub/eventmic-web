@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, RefreshCw, Trash2, Key, Eye, EyeOff, Camera } from 'lucide-react';
+import { Shield, Plus, RefreshCw, Trash2, Key, Eye, EyeOff, Camera, Link2, Check } from 'lucide-react';
 import { useSession } from '../../context/SessionContext.jsx';
 import { StatusPill } from '../common/StatusPill.jsx';
 import { Button } from '../ui/Button.jsx';
@@ -7,8 +7,19 @@ import { Avatar } from '../common/Avatar.jsx';
 import { AvatarUploader } from '../common/AvatarUploader.jsx';
 import { useResolvedAvatarSrc } from '../../lib/useAvatar.js';
 
-function PrincipalRow({ p, isRevealed, onToggleReveal, onRegenerate, onRevoke, onSetPhoto, onDeletePhoto }) {
+function PrincipalRow({ p, sessionCode, isRevealed, onToggleReveal, onRegenerate, onRevoke, onSetPhoto, onDeletePhoto }) {
   const avatarSrc = useResolvedAvatarSrc(p);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const inviteUrl = typeof window !== 'undefined' && p.inviteToken && sessionCode
+    ? `${window.location.origin}/speaker?code=${encodeURIComponent(sessionCode)}&invite=${encodeURIComponent(p.inviteToken)}`
+    : '';
+  const handleCopyInvite = () => {
+    if (!inviteUrl) return;
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
+  };
   return (
     <div className="p-3 rounded-xl border border-border bg-background/80 flex items-center justify-between">
       <div className="flex items-center gap-2.5 min-w-0">
@@ -31,6 +42,11 @@ function PrincipalRow({ p, isRevealed, onToggleReveal, onRegenerate, onRevoke, o
       </div>
 
       <div className="flex items-center gap-1">
+        {inviteUrl && (
+          <button type="button" onClick={handleCopyInvite} title="Copy unique speaker invite link" aria-label={`Copy invite link for ${p.name}`} className="p-1.5 rounded-lg text-accent hover:text-white hover:bg-surface transition-colors">
+            {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Link2 size={14} />}
+          </button>
+        )}
         <button type="button" onClick={onSetPhoto} title="Set speaker photo" aria-label={`Set photo for ${p.name}`} className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition-colors">
           <Camera size={14} />
         </button>
@@ -51,7 +67,7 @@ function PrincipalRow({ p, isRevealed, onToggleReveal, onRegenerate, onRevoke, o
 }
 
 export function PrincipalsTab() {
-  const { principals = [], createPrincipal, getPrincipals, revokePrincipal, regeneratePrincipalPin, uploadAvatar, deleteAvatar } = useSession();
+  const { session, principals = [], createPrincipal, getPrincipals, revokePrincipal, regeneratePrincipalPin, uploadAvatar, deleteAvatar } = useSession();
   const [localPrincipals, setLocalPrincipals] = useState(principals || []);
   const [revealedPins, setRevealedPins] = useState({});
   const [newName, setNewName] = useState('');
@@ -150,7 +166,7 @@ export function PrincipalsTab() {
         <div className="space-y-2">
           {localPrincipals.map((p) => (
             <PrincipalRow
-              key={p.id} p={p} isRevealed={Boolean(revealedPins[p.id])}
+              key={p.id} p={p} sessionCode={session?.code} isRevealed={Boolean(revealedPins[p.id])}
               onToggleReveal={() => setRevealedPins(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
               onRegenerate={() => handleRegenerate(p.id)} onRevoke={() => handleRevoke(p.id)}
               onSetPhoto={() => setPhotoTarget(p)} onDeletePhoto={() => deleteAvatar?.(p.id)}
