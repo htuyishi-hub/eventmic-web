@@ -59,7 +59,7 @@ export function DMMark({ recording = false, size = 32, color = 'currentColor', c
         />
       ))}
       <line className="dm-bar" x1="678" y1="277" x2="678" y2="293" style={{ '--d': '0.75s', '--s': '0.2s', '--m': 0.6 }} />
-      <circle cx="722" cy="286" r="0.1" strokeWidth="22" />
+      <circle cx="722" cy="286" r="11" fill={color} stroke="none" />
     </svg>
   );
 }

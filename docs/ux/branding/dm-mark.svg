@@ -13,5 +13,5 @@
   <line class="b" style="--d:.6s;--s:.1s;--m:.5" x1="590" y1="292" x2="590" y2="318"/>
   <line class="b" style="--d:.85s;--s:.3s;--m:.5" x1="632" y1="258" x2="632" y2="278"/>
   <line class="b" style="--d:.75s;--s:.2s;--m:.6" x1="678" y1="277" x2="678" y2="293"/>
-  <circle cx="722" cy="286" r=".1" stroke-width="22"/>
+  <circle cx="722" cy="286" r="11" fill="#fff" stroke="none"/>
 </svg>
