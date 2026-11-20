@@ -167,10 +167,29 @@ export class LiveKitTransport {
     await this.api.postFloorAction('mute', body).catch(() => {});
   }
 
-  async createPrincipal(name) { return this.api.managePrincipal(this.code, 'create', null, name); }
-  async getPrincipals() { return this.api.managePrincipal(this.code, 'list'); }
-  async revokePrincipal(id) { return this.api.managePrincipal(this.code, 'revoke', id); }
-  async regeneratePrincipalPin(id) { return this.api.managePrincipal(this.code, 'regenerate', id); }
+  async createPrincipal(name) {
+    const created = await this.api.managePrincipal(this.code, 'create', null, name);
+    const list = await this.api.managePrincipal(this.code, 'list').catch(() => null);
+    if (Array.isArray(list)) this.emit('principals', list);
+    return created;
+  }
+  async getPrincipals() {
+    const list = await this.api.managePrincipal(this.code, 'list');
+    if (Array.isArray(list)) this.emit('principals', list);
+    return list;
+  }
+  async revokePrincipal(id) {
+    const res = await this.api.managePrincipal(this.code, 'revoke', id);
+    const list = await this.api.managePrincipal(this.code, 'list').catch(() => null);
+    if (Array.isArray(list)) this.emit('principals', list);
+    return res;
+  }
+  async regeneratePrincipalPin(id) {
+    const pin = await this.api.managePrincipal(this.code, 'regenerate', id);
+    const list = await this.api.managePrincipal(this.code, 'list').catch(() => null);
+    if (Array.isArray(list)) this.emit('principals', list);
+    return pin;
+  }
   async updateSettings(settings) { return this.api.updateSettings(this.code, settings); }
   async uploadAvatar(blob, targetId) {
     const res = await this.api.uploadAvatar(blob, targetId, this.code);
@@ -185,6 +204,11 @@ export class LiveKitTransport {
   async fetchSessionState() {
     const data = await this.api.fetchState(this.code);
     if (data.metrics) this.emit('metrics', data.metrics);
+    if (Array.isArray(data.queue)) this.emit('queue', data.queue);
+    if (data.floor !== undefined) this.emit('floor', data.floor);
+    if (data.attendeeCount !== undefined || Array.isArray(data.attendees)) {
+      this.emit('attendees', { count: data.attendeeCount ?? data.attendees?.length ?? 0, list: data.attendees || [] });
+    }
     return data;
   }
 

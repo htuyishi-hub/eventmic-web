@@ -13,11 +13,11 @@ export function AdminTabs({ queue = [], onGrant, onDrop, onOpenQr }) {
   const { fairModeActive, attendeeCount, principals, urgent = [] } = useSession();
 
   const tabDefs = [
-    { id: 'queue', label: 'Queue', icon: ListOrdered, badge: queue.length, shortcut: '1' },
-    { id: 'urgent', label: 'Urgent', icon: Zap, badge: urgent.length, badgeVariant: 'urgent', shortcut: '2' },
-    { id: 'attendees', label: 'Attendees', icon: Users, badge: attendeeCount, shortcut: '3' },
-    { id: 'spoke', label: 'Spoke', icon: History, shortcut: '4' },
-    { id: 'principals', label: 'Speakers', icon: Shield, badge: principals?.length, shortcut: '5' }
+    { id: 'queue', label: 'Queue', icon: ListOrdered, badge: queue.length },
+    { id: 'urgent', label: 'Urgent', icon: Zap, badge: urgent.length, badgeVariant: 'urgent' },
+    { id: 'attendees', label: 'Attendees', icon: Users, badge: attendeeCount },
+    { id: 'spoke', label: 'Spoke', icon: History },
+    { id: 'principals', label: 'Speakers', icon: Shield, badge: principals?.length || 0 }
   ];
 
   // Tab number shortcuts (1-5)

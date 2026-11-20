@@ -77,7 +77,8 @@ export function PrincipalsTab() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (principals && principals.length > 0) { setLocalPrincipals(principals); return; }
+    setLocalPrincipals(principals || []);
+    if (principals && principals.length > 0) return;
     let mounted = true;
     getPrincipals().then(list => { if (mounted && Array.isArray(list)) setLocalPrincipals(list); }).catch(() => {});
     return () => { mounted = false; };
