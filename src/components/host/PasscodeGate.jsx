@@ -7,20 +7,19 @@ const PASSCODE_STORAGE_KEY = 'eventmic_host_unlocked';
 export function PasscodeGate({ onUnlocked }) {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
-  const expectedPasscode = import.meta.env.VITE_HOST_PASSCODE || '1234';
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (passcode === expectedPasscode) {
-      try {
-        sessionStorage.setItem(PASSCODE_STORAGE_KEY, 'true');
-        sessionStorage.setItem('eventmic_host_passcode', passcode);
-      } catch {}
-      onUnlocked();
-    } else {
-      setError('Incorrect admin passcode. Please try again.');
-      setPasscode('');
+    const clean = passcode.trim();
+    if (!clean) {
+      setError('Please enter the admin passcode.');
+      return;
     }
+    try {
+      sessionStorage.setItem(PASSCODE_STORAGE_KEY, 'true');
+      sessionStorage.setItem('eventmic_host_passcode', clean);
+    } catch {}
+    onUnlocked();
   };
 
   return (
@@ -50,7 +49,7 @@ export function PasscodeGate({ onUnlocked }) {
                 setPasscode(e.target.value);
                 if (error) setError('');
               }}
-              placeholder="Enter passcode (default: 1234)"
+              placeholder="Enter admin passcode"
               autoFocus
               className="w-full px-4 py-3 bg-background border border-border rounded-xl text-white placeholder-muted/60 text-sm focus:border-accent focus:outline-none transition-colors"
             />

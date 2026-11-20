@@ -18,14 +18,29 @@ export class SocketClient {
   }
 
   _deriveWsUrl(apiBase) {
-    if (typeof window === 'undefined') return 'ws://localhost:3001/ws';
+    // 1. Explicit VITE_SOCKET_URL takes priority (e.g. wss://eventmic-server.onrender.com/ws)
+    const envWs = import.meta.env?.VITE_SOCKET_URL;
+    if (envWs && String(envWs).trim()) {
+      const clean = String(envWs).trim().replace(/\/+$/, '');
+      return clean.endsWith('/ws') ? clean : `${clean}/ws`;
+    }
+
+    // 2. Derive from absolute HTTP/HTTPS API base if provided
     const raw = apiBase || import.meta.env?.VITE_API_BASE || '';
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return raw.replace(/^http/, 'ws').replace(/\/api\/?$/, '/ws');
+      return raw.replace(/^http/, 'ws').replace(/\/api\/?$/, '') + '/ws';
     }
+
+    // 3. Fall back to same origin ONLY in dev. In production on Vercel,
+    // rewrites do NOT carry WebSocket traffic; VITE_SOCKET_URL is required.
+    if (typeof window !== 'undefined' && import.meta.env.DEV) {
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${proto}//${window.location.host}/ws`;
+    }
+
+    if (typeof window === 'undefined') return 'ws://localhost:3001/ws';
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    return `${proto}//${host}/ws`;
+    return `${proto}//${window.location.host}/ws`;
   }
 
   on(event, handler) {

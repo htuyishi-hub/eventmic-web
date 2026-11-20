@@ -126,9 +126,12 @@ export function Dashboard({ onSessionEndedWithStats }) {
           <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">Esc</kbd> End</span>
           <span><kbd className="px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] text-white">Q</kbd> QR</span>
         </div>
-        <div onClick={() => setIsSettingsOpen(true)} className="flex items-center gap-1.5 font-mono text-[10px] cursor-pointer hover:text-white transition-colors">
-          <Volume2 size={12} className="text-accent" />
-          <span className="truncate max-w-[220px]">Output: {activeDeviceLabel}</span>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[10px] text-muted/70">v{__APP_VERSION__}</span>
+          <div onClick={() => setIsSettingsOpen(true)} className="flex items-center gap-1.5 font-mono text-[10px] cursor-pointer hover:text-white transition-colors">
+            <Volume2 size={12} className="text-accent" />
+            <span className="truncate max-w-[220px]">Output: {activeDeviceLabel}</span>
+          </div>
         </div>
       </footer>
 
