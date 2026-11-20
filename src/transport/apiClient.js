@@ -9,9 +9,14 @@ export class ApiClient {
   }
 
   async createSession(name, passcode) {
+    let adminToken = '';
+    try { adminToken = localStorage.getItem('dm_admin_token') || ''; } catch {}
+    const headers = { 'Content-Type': 'application/json' };
+    if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
+    else if (passcode) headers['x-host-passcode'] = passcode;
     const res = await fetch(`${this.apiBase}/sessions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-host-passcode': passcode },
+      headers,
       body: JSON.stringify({ name })
     });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to create session');

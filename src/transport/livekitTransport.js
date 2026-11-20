@@ -84,7 +84,13 @@ export class LiveKitTransport {
 
     let res;
     try {
-      res = await fetch(`${this.apiBase}/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      let adminToken = '';
+      try { adminToken = localStorage.getItem('dm_admin_token') || ''; } catch {}
+      const authHeaders = { 'Content-Type': 'application/json' };
+      if ((this.role === 'admin' || this.role === 'host') && adminToken) {
+        authHeaders['Authorization'] = `Bearer ${adminToken}`;
+      }
+      res = await fetch(`${this.apiBase}/auth`, { method: 'POST', headers: authHeaders, body: JSON.stringify(body) });
       if (res.status === 404) res = await fetch(`${this.apiBase}/token`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     } catch {
       this.setConnectionState('disconnected');

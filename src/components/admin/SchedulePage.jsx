@@ -48,10 +48,14 @@ export function SchedulePage() {
   const [fairMode, setFairMode] = useState('on');
   const [photos, setPhotos] = useState('speaker_only');
 
-  const headers = useCallback(() => ({
-    'Content-Type': 'application/json',
-    'x-host-passcode': getHostPasscode()
-  }), []);
+  const headers = useCallback(() => {
+    let adminToken = '';
+    try { adminToken = localStorage.getItem('dm_admin_token') || ''; } catch {}
+    const h = { 'Content-Type': 'application/json' };
+    if (adminToken) h['Authorization'] = `Bearer ${adminToken}`;
+    else h['x-host-passcode'] = getHostPasscode();
+    return h;
+  }, []);
 
   const loadSchedules = useCallback(async () => {
     try {

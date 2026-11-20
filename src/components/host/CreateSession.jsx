@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, RefreshCw, Trash2, Calendar } from 'lucide-react';
+import { Play, RefreshCw, Trash2, Calendar, LogOut } from 'lucide-react';
 import { DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 
@@ -11,6 +11,17 @@ export function CreateSession({ onStartSession, onResumeSession }) {
   const [fairMode, setFairMode] = useState(true);
   const [turnCap, setTurnCap] = useState(120);
   const [photos, setPhotos] = useState('speaker_only');
+  let adminProfile = null;
+  try { adminProfile = JSON.parse(localStorage.getItem('dm_admin_profile') || 'null'); } catch {}
+  const handleSignOut = () => {
+    try {
+      localStorage.removeItem('dm_admin_token');
+      localStorage.removeItem('dm_admin_profile');
+      sessionStorage.removeItem('eventmic_host_unlocked');
+      sessionStorage.removeItem('eventmic_host_passcode_val');
+    } catch {}
+    window.location.reload();
+  };
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -63,6 +74,15 @@ export function CreateSession({ onStartSession, onResumeSession }) {
         <h1 className="text-2xl font-black text-center text-white uppercase tracking-wider mb-2">
           Session Setup
         </h1>
+        {adminProfile?.name && (
+          <div className="flex items-center justify-center gap-2 mb-3 text-xs text-muted">
+            <span>Signed in as <strong className="text-white">{adminProfile.name}</strong></span>
+            <button type="button" onClick={handleSignOut} className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 font-semibold">
+              <LogOut size={12} />
+              <span>Sign out</span>
+            </button>
+          </div>
+        )}
         <p className="text-sm text-center text-muted mb-8">
           Launch a live Q&amp;A microphone room for your audience.
         </p>
