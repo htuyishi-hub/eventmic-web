@@ -3,7 +3,7 @@
  */
 export const en = {
   common: {
-    appName: 'EventMic', live: 'Live', ended: 'Ended',
+    appName: 'DM', live: 'Live', ended: 'Ended',
     connecting: 'Connecting...', connected: 'Connected',
     reconnecting: 'Reconnecting...', disconnected: 'Disconnected',
     offline: 'Offline', dismiss: 'Dismiss', cancel: 'Cancel',

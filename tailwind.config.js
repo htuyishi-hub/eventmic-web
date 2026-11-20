@@ -19,7 +19,9 @@ export default {
           DEFAULT: 'var(--color-accent)',
           hover: '#2563EB',
         },
-        live: 'var(--color-live)',
+        // Solid fills for buttons with white text (WCAG AA >= 4.5:1)
+        action: { DEFAULT: '#2563EB', hover: '#1D4ED8' },
+        live: { DEFAULT: 'var(--color-live)', solid: '#DC2626', 'solid-hover': '#B91C1C' },
         success: 'var(--color-success)',
         warning: 'var(--color-warning)',
       },

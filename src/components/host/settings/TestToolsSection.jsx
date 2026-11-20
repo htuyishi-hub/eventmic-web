@@ -116,7 +116,7 @@ export function TestToolsSection({
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => speakAnnouncement('EventMic audio check. Channel output verified.')}
+            onClick={() => speakAnnouncement('DM audio check. Channel output verified.')}
             className="w-full text-xs gap-2 py-1.5 mt-1 text-muted hover:text-white"
           >
             <Radio size={14} />

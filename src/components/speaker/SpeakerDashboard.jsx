@@ -193,7 +193,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
       )}
 
       <footer className="pt-2 text-center text-[10px] text-muted/60 font-mono">
-        EventMic Speaker v{__APP_VERSION__}
+        DM Speaker v{__APP_VERSION__}
       </footer>
     </div>
   );

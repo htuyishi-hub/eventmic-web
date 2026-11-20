@@ -36,7 +36,7 @@ export function DevGalleryPage() {
               <span className="font-mono text-xs px-2 py-0.5 rounded bg-accent/20 border border-accent/40 text-accent-light font-bold">
                 DEV
               </span>
-              <h1 className="text-base font-black text-white tracking-tight">EventMic Design Gallery</h1>
+              <h1 className="text-base font-black text-white tracking-tight">DM Design Gallery</h1>
             </div>
             <p className="text-[11px] text-muted">Static preview of all roles & edge states side-by-side</p>
           </div>
