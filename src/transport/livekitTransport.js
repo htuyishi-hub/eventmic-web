@@ -52,7 +52,8 @@ export class LiveKitTransport {
     return h;
   }
 
-  async createSession({ name }) {
+  async createSession({ name, settings }) {
+    this.pendingSettings = settings || null;
     const data = await this.api.createSession(name, this._getHostPasscode());
     const info = { code: data.code, name: data.name, status: 'live', createdAt: data.createdAt };
     localStorage.setItem(HOST_STORAGE_KEY, JSON.stringify(info));
@@ -99,6 +100,11 @@ export class LiveKitTransport {
 
     const { token, url, apiToken, identity } = await res.json();
     this.apiToken = apiToken || null;
+    if (this.pendingSettings && (role === 'host' || role === 'admin')) {
+      const s = this.pendingSettings;
+      this.pendingSettings = null;
+      this.updateSettings(s).catch(() => {});
+    }
     if (identity) this.myId = identity;
 
     this.socketClient.connect(this.apiToken);
