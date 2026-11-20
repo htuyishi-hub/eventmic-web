@@ -3,7 +3,7 @@ import { ShieldCheck, Lock, ArrowRight, Mic } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 import { Spinner } from '../ui/Spinner.jsx';
 
-export function SpeakerJoinScreen({ onLogin, initialCode = '' }) {
+export function SpeakerJoinScreen({ onLogin, onJoin, initialCode = '' }) {
   const [code, setCode] = useState(initialCode);
   const [pin, setPin] = useState('');
   const [name, setName] = useState('');
@@ -28,7 +28,10 @@ export function SpeakerJoinScreen({ onLogin, initialCode = '' }) {
     setLoading(true);
     setError('');
     try {
-      await onLogin({ code: cleanCode, pin: cleanPin, name: name.trim() });
+      const loginFn = onLogin || onJoin;
+      if (loginFn) {
+        await loginFn({ code: cleanCode, pin: cleanPin, name: name.trim() });
+      }
     } catch (err) {
       // Real PIN attempt rate limiting and lockout is enforced authoritative on the server.
       const attempts = failedAttempts + 1;
