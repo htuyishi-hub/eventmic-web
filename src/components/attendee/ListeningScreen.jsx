@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Hand, Radio, ShieldCheck, Zap, Camera, X } from 'lucide-react';
+import { Hand, ShieldCheck, Zap, Camera, X } from 'lucide-react';
+import { DMMark, DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 import { UrgentConfirmSheet } from './UrgentConfirmSheet.jsx';
 import { useSession } from '../../context/SessionContext.jsx';
@@ -36,17 +37,18 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
     <div className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto bg-background text-foreground">
       {/* Top Status */}
       <div className="pt-6 text-center space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/15 border border-success/30 text-success text-xs font-bold uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span>Connected</span>
+        <div className="flex items-center justify-between gap-2">
+          <DMLogo size={24} />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>Live</span>
           </div>
 
           {showPhotos && (
             <button
               type="button"
               onClick={() => setIsPhotoOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface border border-border text-xs text-muted hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-full bg-surface border border-border text-xs text-muted hover:text-white transition-colors"
             >
               <Camera size={13} />
               <span>Photo</span>
@@ -80,9 +82,9 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
             </div>
           </div>
         ) : (
-          <div className="p-6 bg-surface border border-border rounded-2xl shadow-xl flex flex-col items-center space-y-3 my-4">
-            <div className="w-16 h-16 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
-              <Radio size={32} className="animate-pulse" />
+          <div className="p-6 bg-surface border border-border rounded-2xl flex flex-col items-center space-y-4 my-4">
+            <div className="w-28 h-28 rounded-full bg-background border-2 border-border flex items-center justify-center text-foreground">
+              <DMMark size={56} />
             </div>
             <div className="space-y-1 text-center">
               <h3 className="text-base font-bold text-white">Stage Audio Reinforced</h3>
@@ -108,10 +110,10 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
                   key={r.id}
                   type="button"
                   onClick={() => setSelectedReason(r.id)}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                  className={`min-h-[44px] px-3 rounded-xl text-xs font-bold transition-all border ${
                     isSelected
-                      ? 'bg-accent border-accent text-white shadow-md shadow-accent/20'
-                      : 'bg-surface border-border text-muted hover:text-white hover:bg-surface/80'
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : 'bg-surface border-border text-muted hover:text-white hover:bg-surface-hover'
                   }`}
                 >
                   {r.label}
@@ -165,7 +167,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
               <button
                 type="button"
                 onClick={() => setIsPhotoOpen(false)}
-                className="p-1 rounded-lg text-muted hover:text-white"
+                className="min-w-[44px] min-h-[44px] grid place-items-center rounded-lg text-muted hover:text-white"
               >
                 <X size={16} />
               </button>

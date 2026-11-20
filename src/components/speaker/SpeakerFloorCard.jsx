@@ -73,7 +73,7 @@ export function SpeakerFloorCard({
 
         <div className="flex items-center gap-2 flex-shrink-0">
           {isOnFloor ? (
-            <Button variant="danger" size="md" onClick={onReleaseFloor} className="gap-2">
+            <Button variant="live" size="md" onClick={onReleaseFloor} className="gap-2">
               <MicOff size={16} />
               <span>Release Floor</span>
             </Button>

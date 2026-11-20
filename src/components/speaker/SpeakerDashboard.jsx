@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { DMLogo } from '../brand/DMLogo.jsx';
 import { Users, Mic, LogOut, AlertTriangle, MessageSquare, Zap, CheckCircle2, XCircle } from 'lucide-react';
 import { useSession } from '../../context/SessionContext.jsx';
 import { useTransport } from '../../context/TransportContext.jsx';
@@ -71,6 +72,12 @@ export function SpeakerDashboard({ onExit, overrideState }) {
   const myId = sc.transport?.myId || 'pr-1';
   const isOnFloor = overrideState?.isOnFloor ?? ((floor && floor.id === myId) || sc.selfState === 'on_air');
   const isNextUp = overrideState?.isNextUp ?? (sc.principalQueue?.some(p => p.id === myId && p.status === 'on_deck'));
+
+  useEffect(() => {
+    if (isNextUp && !overrideState) {
+      try { navigator.vibrate?.([100, 50, 100]); } catch {}
+    }
+  }, [isNextUp, overrideState]);
   const anotherPrincipalOnFloor = floor && floor.role === 'principal' && floor.id !== myId;
   const isRequested = sc.principalQueue?.some(p => p.id === myId);
   const pendingHandovers = overrideState?.pendingHandovers || (sc.principalQueue || []).filter(p => p.id !== myId && !laterDismissed[p.id]);
@@ -79,7 +86,8 @@ export function SpeakerDashboard({ onExit, overrideState }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col p-4 sm:p-6 max-w-4xl mx-auto space-y-4">
       <header className="flex items-center justify-between pb-3 border-b border-border">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <DMLogo size={24} recording={isOnFloor} />
             <span className="font-mono text-xs px-2 py-0.5 rounded bg-surface border border-border text-accent font-bold">
               {sc.session?.code || 'DEMO01'}
             </span>
