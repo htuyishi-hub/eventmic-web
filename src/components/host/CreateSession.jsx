@@ -37,7 +37,7 @@ export function CreateSession({ onStartSession, onResumeSession }) {
 
     try {
       setLoading(true);
-      await onStartSession({ name: trimmed, settings: { fairMode, turnCapSeconds: turnCap, photos } });
+      await onStartSession({ name: trimmed, settings: { fairMode: fairMode ? 'on' : 'off', turnCapSeconds: turnCap, photos } });
     } catch (err) {
       setError(err.message || 'Failed to create session');
     } finally {

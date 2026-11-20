@@ -85,7 +85,14 @@ export function SessionProvider({ children }) {
     return () => unsubs.forEach(fn => fn());
   }, [transport]);
 
-  const createSession = useCallback(async ({ name }) => { dispatch({ type: 'CLEAR_ERROR' }); return transport.createSession({ name }); }, [transport]);
+  const createSession = useCallback(async ({ name, settings }) => {
+    dispatch({ type: 'CLEAR_ERROR' });
+    const res = await transport.createSession({ name, settings });
+    if (settings && transport.updateSettings) {
+      try { await transport.updateSettings(settings); } catch {}
+    }
+    return res;
+  }, [transport]);
   const endSession = useCallback(async () => transport.endSession(), [transport]);
   const connect = useCallback(async (opts) => { dispatch({ type: 'CLEAR_ERROR' }); return transport.connect(opts); }, [transport]);
   const disconnect = useCallback(async () => transport.disconnect(), [transport]);
