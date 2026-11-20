@@ -1,8 +1,42 @@
-# EventMic Design System Proposal (v2.0)
+# DM (Digital Microphone) Design System & Brand Identity (v2.0)
 
-**Status**: Proposal (Documentation Only — Zero Code Changes in Current Release)  
+**Brand Identity**: **DM** — *digital microphone 🎙️* (`digitalmicrophone.com`)  
+**Status**: Proposal & Identity Specification (Zero Code Changes to Active Production Screens)  
 **Target Environments**: Desktop Venue Console (`1366×768`–`1920×1080`), Presenter/Speaker Mobile (`375×667`–`390×844`), In-Audience Attendee Mobile (`375×667`–`390×844`), Public Marketing Portal (`1366×768` & Mobile)  
-**Core Design Philosophy**: *"Speed Under Pressure, Zero Cognitive Overhead in the Dark"*
+**Core Design Philosophy**: *"Artistic Perfected Industrial Standard — Dieter Rams Acoustic Functionalism without Movie Fiction"*
+
+---
+
+## 0. Brand Identity & Logo Specification
+
+### 0.1 Logo Anatomy: Border-Perfect [ DM ] + WhatsApp Voice Inequality Waveform
+The DM mark is engineered for universal acoustic clarity:
+1. **Border-Perfect Monogram `[ DM ]`**:
+   - A crisp, mathematically proportioned border framing the bold uppercase letters **"DM"**.
+   - Geometric precision: 1.5px/2px stroke, 4px corner radius, optical tabular spacing.
+   - Position: Sits in front of the waveform (or as an iconic standalone badge).
+2. **Voice Inequality Waveform (WhatsApp Voice Message Standard)**:
+   - 4 to 5 vertical sound bars with rounded caps (capsule pills) representing genuine human voice amplitude inequality.
+   - **Tapering Rule**: "Starts bigger and ends small."
+   - Heights (at 32px height standard):
+     - **Bar 1 (Onset)**: 28px height (`y=2` to `y=30`) — peak vocal onset.
+     - **Bar 2 (Core tone)**: 20px height (`y=6` to `y=26`) — fundamental frequency.
+     - **Bar 3 (Resonance)**: 14px height (`y=9` to `y=23`) — vocal harmonic.
+     - **Bar 4 (Decay)**: 9px height (`y=11.5` to `y=20.5`) — consonant trailing edge.
+     - **Bar 5 (Terminal)**: 5px height (`y=13.5` to `y=18.5`) — whisper / acoustic silence.
+   - Bar width: 4px, `rx=2` (rounded pill), spaced 5px apart. Centered vertically along the horizontal audio axis.
+3. **Descriptor & Domain**:
+   - Primary: `digital microphone` 🎙️
+   - Canonical Domain: `digitalmicrophone.com`
+4. **Vector Assets**:
+   - Full Lockup: `docs/ux/branding/dm-logo-horizontal.svg`
+   - Primary Mark: `docs/ux/branding/dm-mark.svg`
+   - Compact Favicon / Icon: `docs/ux/branding/dm-favicon.svg`
+   - Production React Component: `src/components/brand/DMLogo.jsx`
+
+### 0.2 Design Aesthetic Directive: Rejecting "Movie Fiction"
+- **What Was Rejected**: Overwrought sci-fi movie fiction, purple nebula gradients, floating cosmic halos, lens flares, and decorative hologram lines that degrade operator legibility.
+- **What Is Adopted**: Timeless industrial standard audio design inspired by Dieter Rams (Braun), Teenage Engineering (OP-1, TP-7), and Swiss typographic grids. Matte anodized chassis (`#0B0C0E`), crisp 1px structural hairline borders (`#22262E`), physical tactile faders, and high-contrast studio status indicators.
 
 ---
 
@@ -65,15 +99,15 @@ All margins, paddings, gap dimensions, and layout widths adhere to an 8px base g
 
 ## 3. Colour Tokens & WCAG Contrast Matrix
 
-EventMic is operated predominantly in dark environments (sound booths, darkened keynote halls, auditoriums). To avoid blinding operators while guaranteeing WCAG 2.1 AA compliance (minimum 4.5:1 for normal text, 3:1 for UI controls), the palette is anchored by deep navy-slate foundations with saturated, high-contrast operational indicators:
+DM is operated predominantly in dark environments (sound booths, darkened keynote halls, auditoriums). To avoid blinding operators while guaranteeing WCAG 2.1 AA compliance (minimum 4.5:1 for normal text, 3:1 for UI controls), the palette is anchored by deep matte obsidian chassis with saturated, high-contrast operational indicators:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                            EVENTMIC PALETTE v2.0                            │
+│                              DM PALETTE v2.0                                │
 ├─────────────┬─────────────┬─────────────┬─────────────┬─────────────┬───────┤
-│   NEUTRAL   │   ACCENT    │    LIVE     │   URGENT    │   SUCCESS   │ MUTED │
-│   #090D16   │   #2563EB   │   #DC2626   │   #D97706   │   #16A34A   │#94A3B8│
-│ (Dark Base) │(Blue-600 AA)│ (Red-600 AA)│(Amber-600)  │ (Green-600) │(Slate)│
+│   CHASSIS   │   DIGITAL   │    TALLY    │   STANDBY   │   SIGNAL    │ MUTED │
+│   #0B0C0E   │   #2563EB   │   #DC2626   │   #D97706   │   #059669   │#94A3B8│
+│ (Anodized)  │(Blue-600 AA)│ (Red-600 AA)│(Amber-600)  │ (Green-600) │(Slate)│
 └─────────────┴─────────────┴─────────────┴─────────────┴─────────────┴───────┘
 ```
 

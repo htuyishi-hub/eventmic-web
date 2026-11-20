@@ -1,7 +1,8 @@
-# EventMic UX Audit & Information Architecture
+# DM (Digital Microphone) UX Audit & Information Architecture
 
+**Brand & Product**: **DM** — *digital microphone 🎙️* (`digitalmicrophone.com`)  
 **Author**: Antigravity UX & Systems Engineering  
-**Scope**: EventMic Web App (`/admin`, `/speaker`, `/join/:code`, `/dev/gallery`) and Public Marketing Site (`/`)  
+**Scope**: DM Web App (`/admin`, `/speaker`, `/join/:code`, `/dev/gallery`) and Public Marketing Site (`/`)  
 **Evaluation Standard**: Nielsen Norman Group 10 Usability Heuristics, WCAG 2.1 / 2.2 AA Accessibility Standards, High-Pressure Live Audio Production Ergonomics  
 **Screenshots Captured**: 62 PNG files across 4 viewports (`1366×768`, `1920×1080`, `375×667`, `390×844`) in `/docs/ux/screenshots/`  
 
