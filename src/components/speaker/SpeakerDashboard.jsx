@@ -9,7 +9,10 @@ import { SpeakerFloorCard } from './SpeakerFloorCard.jsx';
 import { SpeakerAudioPanel } from './SpeakerAudioPanel.jsx';
 import { Drawer } from '../ui/Drawer.jsx';
 import { MessagesPanel } from '../admin/MessagesPanel.jsx';
-import { DemoControls } from '../demo/DemoControls.jsx';
+
+const DemoControls = import.meta.env.DEV
+  ? React.lazy(() => import('../demo/DemoControls.jsx').then(m => ({ default: m.DemoControls })))
+  : null;
 
 export function SpeakerDashboard({ onExit, overrideState }) {
   const sessionContext = useSession();
@@ -166,7 +169,11 @@ export function SpeakerDashboard({ onExit, overrideState }) {
       <Drawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} title="Backstage Messages">
         <MessagesPanel onClose={() => setIsChatOpen(false)} />
       </Drawer>
-      <DemoControls />
+      {import.meta.env.DEV && DemoControls && (
+        <React.Suspense fallback={null}>
+          <DemoControls />
+        </React.Suspense>
+      )}
     </div>
   );
 }

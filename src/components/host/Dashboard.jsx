@@ -15,10 +15,13 @@ import { SessionMetricsBar } from '../admin/SessionMetricsBar.jsx';
 import { SourceMetersCard } from '../admin/SourceMetersCard.jsx';
 import { AnnouncementBox } from '../admin/AnnouncementBox.jsx';
 import { MessagesPanel } from '../admin/MessagesPanel.jsx';
-import { DemoControls } from '../demo/DemoControls.jsx';
 import { Drawer } from '../ui/Drawer.jsx';
 import { Toast } from '../ui/Toast.jsx';
 import { Button } from '../ui/Button.jsx';
+
+const DemoControls = import.meta.env.DEV
+  ? React.lazy(() => import('../demo/DemoControls.jsx').then(m => ({ default: m.DemoControls })))
+  : null;
 
 export function Dashboard({ onSessionEndedWithStats }) {
   const {
@@ -141,7 +144,11 @@ export function Dashboard({ onSessionEndedWithStats }) {
       </Drawer>
       <EndSessionConfirm isOpen={isEndConfirmOpen} onClose={() => setIsEndConfirmOpen(false)} onConfirm={handleEndSessionConfirmed} sessionName={session?.name} />
       {toastMessage && <Toast message={toastMessage} type="warning" onClose={() => setToastMessage('')} />}
-      <DemoControls />
+      {import.meta.env.DEV && DemoControls && (
+        <React.Suspense fallback={null}>
+          <DemoControls />
+        </React.Suspense>
+      )}
     </div>
   );
 }
