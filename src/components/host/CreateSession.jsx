@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Play, RefreshCw, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Play, RefreshCw, Trash2, Calendar } from 'lucide-react';
 import { DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 
@@ -180,6 +181,14 @@ export function CreateSession({ onStartSession, onResumeSession }) {
             <Play size={18} />
             <span>Start Session</span>
           </Button>
+
+          <Link
+            to="/admin/schedule"
+            className="min-h-[44px] w-full inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background text-xs font-bold text-muted hover:text-white transition-colors"
+          >
+            <Calendar size={15} />
+            <span>Schedule &amp; Recurring Calendar</span>
+          </Link>
         </form>
       </div>
     </div>

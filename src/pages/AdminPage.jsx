@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SpeakersPage } from '../components/admin/SpeakersPage.jsx';
+import { SchedulePage } from '../components/admin/SchedulePage.jsx';
 import { useSession } from '../context/SessionContext.jsx';
 import { PasscodeGate } from '../components/host/PasscodeGate.jsx';
 import { CreateSession } from '../components/host/CreateSession.jsx';
@@ -51,6 +52,10 @@ export function AdminPage() {
 
   if (!isUnlocked) {
     return <PasscodeGate onUnlocked={() => setIsUnlocked(true)} />;
+  }
+
+  if (location.pathname === '/admin/schedule') {
+    return <SchedulePage />;
   }
 
   if (endedStats) {
