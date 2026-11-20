@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { SpeakersPage } from '../components/admin/SpeakersPage.jsx';
 import { useSession } from '../context/SessionContext.jsx';
 import { PasscodeGate } from '../components/host/PasscodeGate.jsx';
 import { CreateSession } from '../components/host/CreateSession.jsx';
@@ -8,6 +10,7 @@ import { SessionSummary } from '../components/host/SessionSummary.jsx';
 const PASSCODE_STORAGE_KEY = 'eventmic_host_unlocked';
 
 export function AdminPage() {
+  const location = useLocation();
   const { session, createSession, connect } = useSession();
 
   const [isUnlocked, setIsUnlocked] = useState(() => {
@@ -22,7 +25,14 @@ export function AdminPage() {
 
   const handleStartSession = async ({ name, settings }) => {
     setEndedStats(null);
-    await createSession({ name, settings });
+    const info = await createSession({ name, settings });
+    if (info?.code) {
+      await connect({
+        role: 'admin',
+        code: info.code,
+        name: info.name || name
+      });
+    }
   };
 
   const handleResumeSession = async (savedSession) => {
@@ -60,6 +70,10 @@ export function AdminPage() {
         onResumeSession={handleResumeSession}
       />
     );
+  }
+
+  if (location.pathname === '/admin/speakers') {
+    return <SpeakersPage />;
   }
 
   return (

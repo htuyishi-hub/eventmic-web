@@ -70,13 +70,13 @@ export class LiveKitTransport {
     this.emit('session', { code: this.code, name: this.sessionName, status: 'ended', createdAt: Date.now() });
   }
 
-  async connect({ role, code, name, pin, passcode }) {
+  async connect({ role, code, name, pin, inviteToken, passcode }) {
     this.role = role === 'host' ? 'admin' : role;
     this.code = (code || '').trim().toUpperCase();
     this.sessionName = name || '';
     this.setConnectionState('connecting');
 
-    const body = { role: this.role, code: this.code, name: name || 'Participant', pin, passcode: passcode || this._getHostPasscode() };
+    const body = { role: this.role, code: this.code, name: name || 'Participant', pin, ...(inviteToken ? { inviteToken } : {}), passcode: passcode || this._getHostPasscode() };
     if (this.role === 'attendee') { this.myId = getOrCreateAttendeeId(); body.identity = this.myId; }
 
     let res;
@@ -98,7 +98,8 @@ export class LiveKitTransport {
       throw new Error(errPayload.message);
     }
 
-    const { token, url, apiToken, identity } = await res.json();
+    const { token, url, apiToken, identity, name: authName } = await res.json();
+    if (authName) this.myName = authName;
     this.apiToken = apiToken || null;
     if (this.pendingSettings && (role === 'host' || role === 'admin')) {
       const s = this.pendingSettings;

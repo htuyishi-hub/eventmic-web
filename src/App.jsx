@@ -24,6 +24,7 @@ export default function App() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/setup" element={<AdminPage />} />
             <Route path="/admin/summary" element={<AdminPage />} />
+            <Route path="/admin/speakers" element={<AdminPage />} />
             <Route path="/host" element={<Navigate to="/admin" replace />} />
             <Route path="/speaker" element={<SpeakerPage />} />
             <Route path="/join/:code" element={<JoinPage />} />

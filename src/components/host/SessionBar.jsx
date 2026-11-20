@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QrCode, Copy, Check, Settings, LogOut, Users, MessageSquare, Activity, Megaphone } from 'lucide-react';
 import { DMMark } from '../brand/DMLogo.jsx';
 import { ConnectionBadge } from './ConnectionBadge.jsx';
@@ -18,6 +19,7 @@ export function SessionBar({
   onOpenAnnounce,
   onAir = false
 }) {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(0);
 
@@ -123,6 +125,17 @@ export function SessionBar({
             )}
           </button>
         )}
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => navigate('/admin/speakers')}
+          className="gap-1.5"
+          title="Speakers Names & Passwords"
+        >
+          <Users size={14} className="text-accent" />
+          <span className="hidden sm:inline">Speakers</span>
+        </Button>
 
         <Button
           variant="secondary"
