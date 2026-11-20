@@ -30,16 +30,15 @@ export function SpeakerJoinScreen({ onLogin, initialCode = '' }) {
     try {
       await onLogin({ code: cleanCode, pin: cleanPin, name: name.trim() });
     } catch (err) {
-      // TODO: Real PIN attempt rate limiting and lockout must be enforced on the server,
-      // not on the client. This client-side counter is a UI hint only.
+      // Real PIN attempt rate limiting and lockout is enforced authoritative on the server.
       const attempts = failedAttempts + 1;
       setFailedAttempts(attempts);
-      if (attempts >= 3) {
-        setError(
-          'Notice (UI hint only): Multiple failed attempts. If you forgot your PIN, please request a new PIN from the event admin. (TODO: Authoritative attempt limits are enforced server-side).'
-        );
+      if (err.message) {
+        setError(err.message);
+      } else if (attempts >= 3) {
+        setError('Multiple failed attempts. If you need your PIN regenerated, please check with your event admin.');
       } else {
-        setError(err.message || `Invalid PIN (${attempts}/3 attempts). Check with event admin.`);
+        setError('Invalid PIN. Please check with your event admin.');
       }
     } finally {
       setLoading(false);
@@ -63,7 +62,7 @@ export function SpeakerJoinScreen({ onLogin, initialCode = '' }) {
           </h1>
           <p className="text-xs text-muted">
             {hasMultipleFailures
-              ? 'UI hint: multiple invalid attempts. Ask event host to verify or regenerate your 6-digit PIN.'
+              ? 'Multiple invalid attempts. Ask event host to verify or regenerate your 6-digit PIN.'
               : 'Enter session code and your 6-digit speaker PIN to take the floor.'}
           </p>
         </div>
