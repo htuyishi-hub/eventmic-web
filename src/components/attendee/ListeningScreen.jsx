@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Hand, ShieldCheck, Zap, Camera, X } from 'lucide-react';
-import { DMMark, DMLogo } from '../brand/DMLogo.jsx';
+import { DMRecordingWave, DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 import { UrgentConfirmSheet } from './UrgentConfirmSheet.jsx';
 import { useSession } from '../../context/SessionContext.jsx';
@@ -84,7 +84,7 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
         ) : (
           <div className="p-6 bg-surface border border-border rounded-2xl flex flex-col items-center space-y-4 my-4">
             <div className="w-28 h-28 rounded-full bg-background border-2 border-border flex items-center justify-center text-foreground">
-              <DMMark size={56} />
+              <DMRecordingWave size={56} />
             </div>
             <div className="space-y-1 text-center">
               <h3 className="text-base font-bold text-white">Stage Audio Reinforced</h3>

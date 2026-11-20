@@ -7,6 +7,7 @@ import { AdminPage } from './pages/AdminPage.jsx';
 import { SpeakerPage } from './pages/SpeakerPage.jsx';
 import { JoinPage } from './pages/JoinPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
+import { DMBootSplash } from './components/brand/DMBootSplash.jsx';
 
 const DevGalleryPage = import.meta.env.DEV
   ? React.lazy(() => import('./pages/DevGalleryPage.jsx').then(m => ({ default: m.DevGalleryPage })))
@@ -16,6 +17,7 @@ export default function App() {
   return (
     <TransportProvider>
       <SessionProvider>
+        <DMBootSplash />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />

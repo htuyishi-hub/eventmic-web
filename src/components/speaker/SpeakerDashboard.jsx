@@ -87,7 +87,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
       <header className="flex items-center justify-between pb-3 border-b border-border">
         <div>
           <div className="flex items-center gap-2.5">
-            <DMLogo size={24} recording={isOnFloor} />
+            <DMLogo size={24} loop={isOnFloor} />
             <span className="font-mono text-xs px-2 py-0.5 rounded bg-surface border border-border text-accent font-bold">
               {sc.session?.code || 'DEMO01'}
             </span>

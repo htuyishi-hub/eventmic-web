@@ -46,7 +46,7 @@ export function SessionBar({
     <header className="h-16 px-4 sm:px-6 bg-surface border-b border-border flex items-center justify-between gap-4 flex-shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex items-center gap-2 flex-shrink-0 text-foreground" aria-label="DM">
-          <DMMark size={30} recording={onAir} />
+          <DMMark size={30} loop={onAir} />
           <span className="font-extrabold tracking-wider text-base hidden sm:inline">DM</span>
         </div>
         <div className="min-w-0">

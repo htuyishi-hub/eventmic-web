@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Radio, Square, AlertTriangle } from 'lucide-react';
-import { DMMark, DMLogo } from '../brand/DMLogo.jsx';
+import { DMRecordingWave, DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 import { LevelMeter } from '../host/LevelMeter.jsx';
 import { AudioMeter } from '../../lib/audioMeter.js';
@@ -85,7 +85,7 @@ export function OnAirScreen({
       {/* Top Status */}
       <div className="pt-4 text-center space-y-4">
         <div className="flex items-center justify-between">
-          <DMLogo size={24} recording />
+          <DMLogo size={24} />
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-black uppercase tracking-widest">
             <Radio size={14} />
             <span>On Air</span>
@@ -118,7 +118,7 @@ export function OnAirScreen({
         {/* Big Pulsing Mic Avatar */}
         <div className="p-8 bg-surface border border-red-800 rounded-3xl flex flex-col items-center space-y-6 my-6">
           <div className="w-32 h-32 rounded-full bg-background border-2 border-red-600 ring-4 ring-red-600/20 flex items-center justify-center text-foreground">
-            <DMMark size={72} recording />
+            <DMRecordingWave size={72} recording />
           </div>
 
           <div className="w-full space-y-2">
