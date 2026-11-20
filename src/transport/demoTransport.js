@@ -170,6 +170,16 @@ export class DemoTransport {
     this.emit('urgent', [...this.seed.urgent]);
   }
   async grantUrgent(id) { grantUrgent(this, id); }
+  async uploadAvatar(blob, targetId) {
+    const id = targetId || this.myId;
+    this.emit('avatar', { identity: id, hasAvatar: true, avatarVersion: 1 });
+    return { ok: true, identity: id, version: 1 };
+  }
+  async deleteAvatar(targetId) {
+    const id = targetId || this.myId;
+    this.emit('avatar', { identity: id, hasAvatar: false, avatarVersion: 0 });
+    return { ok: true };
+  }
 
   addFakeAttendee(name) { addFakeAttendee(this, name); }
   raiseFakeHand(reason) { raiseFakeHand(this, reason); }

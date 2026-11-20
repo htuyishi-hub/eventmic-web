@@ -6,42 +6,42 @@ export function createSeedData() {
   const now = Date.now();
 
   const attendees = [
-    { id: 'att-1', name: 'Alex Rivera', status: 'hand_raised', handReason: 'question', raisedAt: now - 120000, speakCount: 0, hasNotSpoken: true, joinedAt: now - 600000 },
-    { id: 'att-2', name: 'Brenda Zhao', status: 'spoken', handReason: null, raisedAt: null, speakCount: 1, hasNotSpoken: false, joinedAt: now - 550000 },
-    { id: 'att-3', name: 'Carlos Ortiz', status: 'hand_raised', handReason: 'comment', raisedAt: now - 95000, speakCount: 0, hasNotSpoken: true, joinedAt: now - 500000 },
-    { id: 'att-4', name: 'Diana Prince', status: 'listening', handReason: null, raisedAt: null, speakCount: 2, hasNotSpoken: false, joinedAt: now - 480000 },
-    { id: 'att-5', name: 'Evan MacIntyre', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 450000 },
-    { id: 'att-6', name: 'Fiona Gallagher', status: 'hand_raised', handReason: 'clarification', raisedAt: now - 60000, speakCount: 1, hasNotSpoken: false, joinedAt: now - 400000 },
-    { id: 'att-7', name: 'George Vance', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 350000 },
-    { id: 'att-8', name: 'Hana Tanaka', status: 'spoken', handReason: null, raisedAt: null, speakCount: 3, hasNotSpoken: false, joinedAt: now - 300000 },
-    { id: 'att-9', name: 'Ian Malcolm', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 250000 },
-    { id: 'att-10', name: 'Julia Roberts', status: 'spoken', handReason: null, raisedAt: null, speakCount: 1, hasNotSpoken: false, joinedAt: now - 200000 },
-    { id: 'att-11', name: 'Kevin Flynn', status: 'hand_raised', handReason: 'compliment', raisedAt: now - 25000, speakCount: 0, hasNotSpoken: true, joinedAt: now - 180000 },
-    { id: 'att-12', name: 'Maya Lin', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 120000 }
+    { id: 'att-1', name: 'Alex Rivera', status: 'hand_raised', handReason: 'question', raisedAt: now - 120000, speakCount: 0, hasNotSpoken: true, joinedAt: now - 600000, hasAvatar: true, avatarVersion: 1 },
+    { id: 'att-2', name: 'Brenda Zhao', status: 'spoken', handReason: null, raisedAt: null, speakCount: 1, hasNotSpoken: false, joinedAt: now - 550000, hasAvatar: false },
+    { id: 'att-3', name: 'Carlos Ortiz', status: 'hand_raised', handReason: 'comment', raisedAt: now - 95000, speakCount: 0, hasNotSpoken: true, joinedAt: now - 500000, hasAvatar: true, avatarVersion: 1 },
+    { id: 'att-4', name: 'Diana Prince', status: 'listening', handReason: null, raisedAt: null, speakCount: 2, hasNotSpoken: false, joinedAt: now - 480000, hasAvatar: false },
+    { id: 'att-5', name: 'Evan MacIntyre', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 450000, hasAvatar: true, avatarVersion: 1 },
+    { id: 'att-6', name: 'Fiona Gallagher', status: 'hand_raised', handReason: 'clarification', raisedAt: now - 60000, speakCount: 1, hasNotSpoken: false, joinedAt: now - 400000, hasAvatar: false },
+    { id: 'att-7', name: 'George Vance', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 350000, hasAvatar: false },
+    { id: 'att-8', name: 'Hana Tanaka', status: 'spoken', handReason: null, raisedAt: null, speakCount: 3, hasNotSpoken: false, joinedAt: now - 300000, hasAvatar: true, avatarVersion: 1 },
+    { id: 'att-9', name: 'Ian Malcolm', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 250000, hasAvatar: false },
+    { id: 'att-10', name: 'Julia Roberts', status: 'spoken', handReason: null, raisedAt: null, speakCount: 1, hasNotSpoken: false, joinedAt: now - 200000, hasAvatar: true, avatarVersion: 1 },
+    { id: 'att-11', name: 'Kevin Flynn', status: 'hand_raised', handReason: 'compliment', raisedAt: now - 25000, speakCount: 0, hasNotSpoken: true, joinedAt: now - 180000, hasAvatar: false },
+    { id: 'att-12', name: 'Maya Lin', status: 'listening', handReason: null, raisedAt: null, speakCount: 0, hasNotSpoken: true, joinedAt: now - 120000, hasAvatar: true, avatarVersion: 1 }
   ];
 
   const principals = [
-    { id: 'pr-1', name: 'Sarah Connor', pin: '847291', createdAt: now - 3600000, status: 'live' },
-    { id: 'pr-2', name: 'Dr. Emmett Brown', pin: '121985', createdAt: now - 3600000, status: 'on_deck' }
+    { id: 'pr-1', name: 'Sarah Connor', pin: '847291', createdAt: now - 3600000, status: 'live', hasAvatar: true, avatarVersion: 1 },
+    { id: 'pr-2', name: 'Dr. Emmett Brown', pin: '121985', createdAt: now - 3600000, status: 'on_deck', hasAvatar: false }
   ];
 
   const queue = [
-    { id: 'att-1', name: 'Alex Rivera', reason: 'question', raisedAt: now - 120000, speakCount: 0, hasNotSpoken: true },
-    { id: 'att-3', name: 'Carlos Ortiz', reason: 'comment', raisedAt: now - 95000, speakCount: 0, hasNotSpoken: true },
-    { id: 'att-6', name: 'Fiona Gallagher', reason: 'clarification', raisedAt: now - 60000, speakCount: 1, hasNotSpoken: false },
-    { id: 'att-11', name: 'Kevin Flynn', reason: 'compliment', raisedAt: now - 25000, speakCount: 0, hasNotSpoken: true }
+    { id: 'att-1', name: 'Alex Rivera', reason: 'question', raisedAt: now - 120000, speakCount: 0, hasNotSpoken: true, hasAvatar: true, avatarVersion: 1 },
+    { id: 'att-3', name: 'Carlos Ortiz', reason: 'comment', raisedAt: now - 95000, speakCount: 0, hasNotSpoken: true, hasAvatar: true, avatarVersion: 1 },
+    { id: 'att-6', name: 'Fiona Gallagher', reason: 'clarification', raisedAt: now - 60000, speakCount: 1, hasNotSpoken: false, hasAvatar: false },
+    { id: 'att-11', name: 'Kevin Flynn', reason: 'compliment', raisedAt: now - 25000, speakCount: 0, hasNotSpoken: true, hasAvatar: false }
   ];
 
   const urgent = [
-    { id: 'urg-1', attendeeId: 'att-4', name: 'Diana Prince', reason: "cant_hear", requestedAt: now - 15000 }
+    { id: 'urg-1', attendeeId: 'att-4', name: 'Diana Prince', reason: "cant_hear", requestedAt: now - 15000, hasAvatar: false }
   ];
 
   const spoken = [
-    { id: 'sp-1', name: 'Brenda Zhao', reason: 'question', startedAt: now - 450000, endedAt: now - 382000, durationSeconds: 68, role: 'attendee' },
-    { id: 'sp-2', name: 'Hana Tanaka', reason: 'comment', startedAt: now - 350000, endedAt: now - 240000, durationSeconds: 110, role: 'attendee' },
-    { id: 'sp-3', name: 'Julia Roberts', reason: 'clarification', startedAt: now - 210000, endedAt: now - 165000, durationSeconds: 45, role: 'attendee' },
-    { id: 'sp-4', name: 'Hana Tanaka', reason: 'question', startedAt: now - 150000, endedAt: now - 60000, durationSeconds: 90, role: 'attendee' },
-    { id: 'sp-5', name: 'Hana Tanaka', reason: 'compliment', startedAt: now - 50000, endedAt: now - 18000, durationSeconds: 32, role: 'attendee' }
+    { id: 'sp-1', name: 'Brenda Zhao', reason: 'question', startedAt: now - 450000, endedAt: now - 382000, durationSeconds: 68, role: 'attendee', hasAvatar: false },
+    { id: 'sp-2', name: 'Hana Tanaka', reason: 'comment', startedAt: now - 350000, endedAt: now - 240000, durationSeconds: 110, role: 'attendee', hasAvatar: true, avatarVersion: 1 },
+    { id: 'sp-3', name: 'Julia Roberts', reason: 'clarification', startedAt: now - 210000, endedAt: now - 165000, durationSeconds: 45, role: 'attendee', hasAvatar: true, avatarVersion: 1 },
+    { id: 'sp-4', name: 'Hana Tanaka', reason: 'question', startedAt: now - 150000, endedAt: now - 60000, durationSeconds: 90, role: 'attendee', hasAvatar: true, avatarVersion: 1 },
+    { id: 'sp-5', name: 'Hana Tanaka', reason: 'compliment', startedAt: now - 50000, endedAt: now - 18000, durationSeconds: 32, role: 'attendee', hasAvatar: true, avatarVersion: 1 }
   ];
 
   const messages = [
@@ -55,7 +55,9 @@ export function createSeedData() {
     name: 'Sarah Connor',
     role: 'principal',
     startedAt: now - 180000,
-    mode: 'principal'
+    mode: 'principal',
+    hasAvatar: true,
+    avatarVersion: 1
   };
 
   const settings = {
@@ -64,7 +66,8 @@ export function createSeedData() {
     sessionEndTime: now + 3600000,
     allowUrgent: true,
     attendeeTurnCapSeconds: 120,
-    principalConnectMode: 'on_demand'
+    principalConnectMode: 'on_demand',
+    photos: 'speaker_only'
   };
 
   const announcement = {

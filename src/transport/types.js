@@ -21,6 +21,8 @@
  * @property {number} [speakCount] - Number of times attendee has spoken
  * @property {boolean} [hasNotSpoken] - True if speakCount is 0
  * @property {boolean} [urgent] - Whether request is marked urgent
+ * @property {boolean} [hasAvatar] - Whether user has a profile photo
+ * @property {number} [avatarVersion] - Version of avatar for cache busting
  * 
  * @typedef {Object} ActiveSpeaker
  * @property {string} id - Speaker attendee or principal identifier
@@ -30,6 +32,8 @@
  * @property {string} [mode] - Floor mode ('principal' | 'attendee' | 'urgent')
  * @property {string} [reason] - Reason attendee raised hand
  * @property {boolean} [disconnected] - True if speaker dropped connection
+ * @property {boolean} [hasAvatar] - Whether speaker has a profile photo
+ * @property {number} [avatarVersion] - Avatar version
  * 
  * @typedef {Object} PrincipalInfo
  * @property {string} id - Unique identifier
@@ -37,6 +41,8 @@
  * @property {string} [pin] - 6-digit access PIN
  * @property {number} createdAt - Timestamp
  * @property {'offline' | 'on_deck' | 'live' | 'idle'} [status]
+ * @property {boolean} [hasAvatar] - Whether principal has an avatar
+ * @property {number} [avatarVersion] - Avatar version
  * 
  * @typedef {Object} AttendeeInfo
  * @property {string} id
@@ -86,6 +92,7 @@
  * @property {boolean} allowUrgent
  * @property {number} attendeeTurnCapSeconds
  * @property {'on_demand' | 'always'} principalConnectMode
+ * @property {'on' | 'speaker_only' | 'off'} [photos]
  * 
  * @typedef {Object} TransportError
  * @property {ErrorCode} code
@@ -110,6 +117,7 @@
  * @property {(settings: SessionSettings) => void} [settings]
  * @property {(reason: string) => void} [preempted]
  * @property {(active: boolean) => void} [fairMode]
+ * @property {(data: { identity: string, hasAvatar: boolean, avatarVersion: number }) => void} [avatar]
  * 
  * @typedef {Object} TransportInterface
  * @property {(params: { name: string }) => Promise<SessionInfo>} createSession
@@ -132,6 +140,8 @@
  * @property {() => Promise<Object>} fetchSessionState
  * @property {(muted: boolean) => Promise<void>} muteSpeaker
  * @property {(level: number) => Promise<void>} sendLevel
+ * @property {(imageBlobOrData: Blob | string, targetIdentity?: string) => Promise<any>} [uploadAvatar]
+ * @property {(targetIdentity?: string) => Promise<any>} [deleteAvatar]
  * @property {(text: string, recipientRole?: Role) => Promise<void>} [sendMessage]
  * @property {(text: string, type?: 'info' | 'warning', durationMs?: number) => Promise<void>} [broadcastAnnouncement]
  * @property {(urgentId: string) => Promise<void>} [grantUrgent]

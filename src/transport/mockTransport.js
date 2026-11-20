@@ -409,6 +409,18 @@ export class MockTransport {
     return p.pin;
   }
 
+  async uploadAvatar(blob, targetId) {
+    const id = targetId || this.myId;
+    this.emit('avatar', { identity: id, hasAvatar: true, avatarVersion: 1 });
+    return { ok: true, identity: id, version: 1 };
+  }
+
+  async deleteAvatar(targetId) {
+    const id = targetId || this.myId;
+    this.emit('avatar', { identity: id, hasAvatar: false, avatarVersion: 0 });
+    return { ok: true };
+  }
+
   async updateSettings(newSettings) {
     this.settings = { ...this.settings, ...newSettings };
     this.saveHostSession();

@@ -370,3 +370,16 @@ Navigate to `/dev/gallery` in the browser to view all **29 interface states** re
 - **Attendee Flow (10 states in 375px phone frames)**: Join, Listening, Hand raised, Urgent confirm sheet, Preparing mic, On-air, On-air 15s warning, Turn ended, Session ended, Announcement banner.
 - **Attendee Edge & Error Screens (4 states in 375px phone frames)**: Invalid room code, Session full (200 cap), Microphone permission denied, Connection lost.
 
+---
+
+## Temporary Profile Photos (Avatars)
+
+- **Privacy & Storage**: Ephemeral only. Stored strictly in server RAM and purged when the session ends or participants disconnect (>10m).
+- **Client Processing**: Web client renders `AvatarUploader` with camera capture, file picker, interactive square crop/zoom, and canvas re-encoding to 256x256 WebP (< 150 KB).
+- **In-Memory Blob Cache (`avatarCache.js`)**: Fetches avatar blobs via authenticated HTTP requests (`Authorization: Bearer <apiToken>`), generates ref-counted `blob:...` URLs, and automatically revokes them on unmount to prevent memory leaks. No tokens are exposed in image URLs or DOM attributes.
+- **Role Enforcement & Fallback**:
+  - Organizers (Admin & Speakers) see all participant avatars.
+  - Attendees see only the live speaker's avatar (`photos: 'speaker_only'`).
+  - Initials with deterministic name color hashing are automatically rendered when no photo is uploaded or when photos are loading.
+
+

@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, CheckCircle2, ShieldAlert, ArrowRight } from 'lucide-react';
+import { Mic, CheckCircle2, ShieldAlert, ArrowRight, Camera } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
+import { useSession } from '../../context/SessionContext.jsx';
+import { AvatarUploader } from '../common/AvatarUploader.jsx';
 
 export function SpeakerMicCheckScreen({ onContinue }) {
+  const { session, uploadAvatar, deleteAvatar } = useSession();
+  const [step, setStep] = useState('mic');
   const [devices, setDevices] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState('');
   const [isTesting, setIsTesting] = useState(false);
@@ -30,8 +34,7 @@ export function SpeakerMicCheckScreen({ onContinue }) {
         streamRef.current.getTracks().forEach(t => t.stop());
         streamRef.current = null;
       }
-      setIsTesting(false);
-      setLevel(0);
+      setIsTesting(false); setLevel(0);
       return;
     }
 
@@ -74,6 +77,42 @@ export function SpeakerMicCheckScreen({ onContinue }) {
     };
   }, []);
 
+  const handleMicContinue = () => {
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    if (session?.settings?.photos === 'off') {
+      onContinue?.();
+    } else {
+      setStep('photo');
+    }
+  };
+
+  if (step === 'photo') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+        <div className="w-full max-w-sm bg-surface border border-border rounded-3xl p-6 shadow-2xl space-y-4">
+          <div className="text-center space-y-1">
+            <div className="w-12 h-12 rounded-2xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent mx-auto">
+              <Camera size={24} />
+            </div>
+            <h2 className="text-lg font-black text-white uppercase tracking-wider">Speaker Profile Photo</h2>
+            <p className="text-xs text-muted">Add a photo to be shown on the room display when you speak.</p>
+          </div>
+
+          <AvatarUploader
+            onSave={async (blob) => { await uploadAvatar(blob); onContinue?.(); }}
+            onRemove={async () => { await deleteAvatar(); }}
+            onCancel={() => onContinue?.()}
+          />
+
+          <Button size="md" variant="ghost" onClick={() => onContinue?.()} className="w-full text-xs font-bold text-muted hover:text-white">
+            Skip and enter stage
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="w-full max-w-sm bg-surface border border-border rounded-3xl p-6 shadow-2xl space-y-5">
@@ -83,19 +122,13 @@ export function SpeakerMicCheckScreen({ onContinue }) {
         </div>
 
         <div className="text-center space-y-1">
-          <h2 className="text-lg font-black text-white uppercase tracking-wider">
-            Stage Microphone Check
-          </h2>
-          <p className="text-xs text-muted">
-            Verify your headset, lapel, or device microphone before entering the live stage.
-          </p>
+          <h2 className="text-lg font-black text-white uppercase tracking-wider">Stage Microphone Check</h2>
+          <p className="text-xs text-muted">Verify your headset, lapel, or device microphone before entering the live stage.</p>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">
-              Audio Input Device
-            </label>
+            <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">Audio Input Device</label>
             <select
               value={selectedDevice}
               onChange={(e) => setSelectedDevice(e.target.value)}
@@ -105,9 +138,7 @@ export function SpeakerMicCheckScreen({ onContinue }) {
                 <option value="">Default Microphone</option>
               ) : (
                 devices.map(d => (
-                  <option key={d.deviceId} value={d.deviceId}>
-                    {d.label || `Microphone (${d.deviceId.slice(0, 6)})`}
-                  </option>
+                  <option key={d.deviceId} value={d.deviceId}>{d.label || `Microphone (${d.deviceId.slice(0, 6)})`}</option>
                 ))
               )}
             </select>
@@ -119,36 +150,19 @@ export function SpeakerMicCheckScreen({ onContinue }) {
               <span className={level > 10 ? 'text-accent font-bold' : ''}>{level}%</span>
             </div>
             <div className="w-full h-3 rounded-full bg-surface overflow-hidden border border-border">
-              <div
-                className="h-full bg-accent transition-all duration-75 rounded-full"
-                style={{ width: `${level}%` }}
-              />
+              <div className="h-full bg-accent transition-all duration-75 rounded-full" style={{ width: `${level}%` }} />
             </div>
           </div>
 
-          <Button
-            size="md"
-            variant={isTesting ? 'secondary' : 'primary'}
-            onClick={toggleTest}
-            className="w-full gap-2 text-xs py-2"
-          >
+          <Button size="md" variant={isTesting ? 'secondary' : 'primary'} onClick={toggleTest} className="w-full gap-2 text-xs py-2">
             <Mic size={14} />
             <span>{isTesting ? 'Stop Test' : 'Test My Mic'}</span>
           </Button>
         </div>
 
-        <Button
-          size="huge"
-          variant="primary"
-          onClick={() => {
-            if (animRef.current) cancelAnimationFrame(animRef.current);
-            if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-            onContinue?.();
-          }}
-          className="w-full gap-2"
-        >
+        <Button size="huge" variant="primary" onClick={handleMicContinue} className="w-full gap-2">
           <CheckCircle2 size={16} />
-          <span>Continue to Stage</span>
+          <span>Continue</span>
           <ArrowRight size={16} />
         </Button>
       </div>

@@ -23,7 +23,7 @@ export function JoinPage() {
   const {
     session, queue, floor, selfState, error, preemptedMessage,
     clearPreempted, connect, raiseHand, lowerHand, urgentRequest,
-    sendLevel, clearError, announcement
+    sendLevel, clearError, announcement, uploadAvatar
   } = useSession();
 
   const { connectionState } = useTransport();
@@ -54,10 +54,17 @@ export function JoinPage() {
     prevSelfStateRef.current = selfState;
   }, [selfState, preemptedMessage, clearPreempted]);
 
-  const handleJoinSubmit = async (enteredName) => {
+  const handleJoinSubmit = async (enteredName, photoBlob = null) => {
     setAttendeeName(enteredName);
     setHasJoined(true);
     await connect({ role: 'attendee', code, name: enteredName });
+    if (photoBlob && uploadAvatar) {
+      try {
+        await uploadAvatar(photoBlob);
+      } catch (err) {
+        console.warn('Failed to upload avatar on join:', err);
+      }
+    }
   };
 
   const handleRetry = () => {

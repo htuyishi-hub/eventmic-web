@@ -12,17 +12,10 @@ export class LiveKitTransport {
   constructor(options = {}) {
     let raw = options.apiBase || import.meta.env?.VITE_API_BASE || '/api';
     this.apiBase = String(raw).trim().replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api';
-    this.role = null;
-    this.code = null;
-    this.sessionName = null;
-    this.myId = options.id || null;
-    this.apiToken = null;
-    this.connectionState = 'disconnected';
-    this.selfState = 'listening';
-    this.audioMeter = new AudioMeter();
-    this.listeners = new Map();
-    this.preWarmedStream = null;
-    this._room = null;
+    this.role = null; this.code = null; this.sessionName = null; this.myId = options.id || null;
+    this.apiToken = null; this.connectionState = 'disconnected'; this.selfState = 'listening';
+    this.audioMeter = new AudioMeter(); this.listeners = new Map();
+    this.preWarmedStream = null; this._room = null;
 
     this.api = new ApiClient(this.apiBase, () => this._getAuthHeaders());
     this.socketClient = new SocketClient({ apiBase: this.apiBase });
@@ -47,16 +40,11 @@ export class LiveKitTransport {
     this.listeners.get(event).add(handler);
     return () => this.listeners.get(event)?.delete(handler);
   }
-
   emit(event, data) { this.listeners.get(event)?.forEach(fn => { try { fn(data); } catch {} }); }
   setConnectionState(st) { if (this.connectionState !== st) { this.connectionState = st; this.emit('connection', st); } }
   setSelfState(st) { if (this.selfState !== st) { this.selfState = st; this.emit('self', st); } }
   setPreWarmedStream(stream) { this.preWarmedStream = stream; }
-
-  _getHostPasscode() {
-    return typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('eventmic_host_passcode') || '1234' : '1234';
-  }
-
+  _getHostPasscode() { return typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('eventmic_host_passcode') || '1234' : '1234'; }
   _getAuthHeaders() {
     const h = { 'Content-Type': 'application/json' };
     if (this.apiToken) h['Authorization'] = `Bearer ${this.apiToken}`;
@@ -156,12 +144,10 @@ export class LiveKitTransport {
     await this.api.postFloorAction('grant', { code: this.code, identity: id });
     this.socketClient.send('grant_floor', { attendeeId: id });
   }
-
   async revoke(id) {
     await this.api.postFloorAction('revoke', { code: this.code, identity: id });
     this.socketClient.send('revoke_floor', { attendeeId: id });
   }
-
   async muteSpeaker(muted) {
     if (this.audioElement) this.audioElement.muted = Boolean(muted);
     let identity = null;
@@ -179,6 +165,16 @@ export class LiveKitTransport {
   async revokePrincipal(id) { return this.api.managePrincipal(this.code, 'revoke', id); }
   async regeneratePrincipalPin(id) { return this.api.managePrincipal(this.code, 'regenerate', id); }
   async updateSettings(settings) { return this.api.updateSettings(this.code, settings); }
+  async uploadAvatar(blob, targetId) {
+    const res = await this.api.uploadAvatar(blob, targetId, this.code);
+    this.emit('avatar', { identity: res.identity || targetId || this.myId, hasAvatar: true, avatarVersion: res.version });
+    return res;
+  }
+  async deleteAvatar(targetId) {
+    const res = await this.api.deleteAvatar(targetId, this.code);
+    this.emit('avatar', { identity: targetId || this.myId, hasAvatar: false, avatarVersion: 0 });
+    return res;
+  }
   async fetchSessionState() {
     const data = await this.api.fetchState(this.code);
     if (data.metrics) this.emit('metrics', data.metrics);
@@ -191,7 +187,6 @@ export class LiveKitTransport {
     await this.sessionManager.disconnect();
     this.setConnectionState('disconnected');
   }
-
   async setOutputDevice(id) { this.outputDeviceId = id; }
   get canPlaybackAudio() { return true; }
   async startAudio() { return Promise.resolve(); }

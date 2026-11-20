@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Monitor, Mic, Smartphone, AlertCircle, LayoutGrid } from 'lucide-react';
+import { ArrowLeft, Monitor, Mic, Smartphone, AlertCircle, LayoutGrid, Camera } from 'lucide-react';
 import { AdminGallerySection } from '../components/gallery/AdminGallerySection.jsx';
 import { SpeakerGallerySection } from '../components/gallery/SpeakerGallerySection.jsx';
 import { AttendeeGallerySection } from '../components/gallery/AttendeeGallerySection.jsx';
 import { AttendeeErrorsSection } from '../components/gallery/AttendeeErrorsSection.jsx';
+import { AvatarGallerySection } from '../components/gallery/AvatarGallerySection.jsx';
 
 export function DevGalleryPage() {
   const [activeFilter, setActiveFilter] = useState('all');
 
   const filters = [
-    { id: 'all', label: 'All States', count: 29, icon: LayoutGrid },
+    { id: 'all', label: 'All States', count: 32, icon: LayoutGrid },
     { id: 'admin', label: 'Admin', count: 6, icon: Monitor },
     { id: 'speaker', label: 'Speaker', count: 9, icon: Mic },
     { id: 'attendee', label: 'Attendee', count: 10, icon: Smartphone },
+    { id: 'avatars', label: 'Avatars', count: 3, icon: Camera },
     { id: 'errors', label: 'Errors', count: 4, icon: AlertCircle }
   ];
 
@@ -84,6 +86,12 @@ export function DevGalleryPage() {
         {(activeFilter === 'all' || activeFilter === 'attendee') && (
           <section id="attendee-states">
             <AttendeeGallerySection />
+          </section>
+        )}
+
+        {(activeFilter === 'all' || activeFilter === 'avatars') && (
+          <section id="avatar-states">
+            <AvatarGallerySection />
           </section>
         )}
 

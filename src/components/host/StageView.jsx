@@ -3,6 +3,9 @@ import { Mic, MicOff, PhoneOff, Radio, Volume2, ShieldCheck, AlertOctagon } from
 import { LevelMeter } from './LevelMeter.jsx';
 import { Button } from '../ui/Button.jsx';
 import { formatDuration } from '../../lib/time.js';
+import { Avatar } from '../common/Avatar.jsx';
+import { RoleBadge } from '../common/RoleBadge.jsx';
+import { useResolvedAvatarSrc } from '../../lib/useAvatar.js';
 
 export function StageView({
   floor,
@@ -20,6 +23,7 @@ export function StageView({
   nextAttendeeName
 }) {
   const [speakingSeconds, setSpeakingSeconds] = useState(0);
+  const avatarSrc = useResolvedAvatarSrc(floor);
 
   useEffect(() => {
     if (!floor?.startedAt) {
@@ -67,14 +71,20 @@ export function StageView({
       <div className="flex-1 flex flex-col items-center justify-center py-4 text-center">
         {floor ? (
           <div className="w-full max-w-lg flex flex-col items-center space-y-4">
-            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all ${
-              isMuted ? 'bg-warning/15 border-2 border-warning/40 text-warning' : 'bg-live/15 border-2 border-live text-live shadow-2xl shadow-live/20 animate-pulse'
-            }`}>
-              {isMuted ? <MicOff size={36} /> : <Mic size={36} />}
+            <div className="relative">
+              <Avatar src={avatarSrc} name={floor.name} size="lg" className="border-4 border-live shadow-2xl shadow-live/20" />
+              <div className={`absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center border-2 border-surface ${
+                isMuted ? 'bg-warning text-black' : 'bg-live text-white animate-pulse'
+              }`}>
+                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+              </div>
             </div>
 
-            <div className="space-y-0.5">
-              <span className="text-[11px] uppercase tracking-widest text-muted font-bold">Current Speaker</span>
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-[11px] uppercase tracking-widest text-muted font-bold">Current Speaker</span>
+                <RoleBadge role={floor.role || floor.mode || 'attendee'} />
+              </div>
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight break-words">{floor.name}</h1>
             </div>
 

@@ -78,4 +78,56 @@ export class ApiClient {
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to update settings');
     return res.json();
   }
+
+  async uploadAvatar(imageBlobOrData, targetIdentity, code) {
+    const headers = { ...this.getAuthHeaders() };
+    const isBlob = typeof Blob !== 'undefined' && imageBlobOrData instanceof Blob;
+    if (isBlob) {
+      headers['Content-Type'] = imageBlobOrData.type || 'image/webp';
+    } else {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    let url = `${this.apiBase}/avatar`;
+    const params = new URLSearchParams();
+    if (targetIdentity) params.append('identity', targetIdentity);
+    if (code) params.append('code', code);
+    const qs = params.toString();
+    if (qs) url += `?${qs}`;
+
+    const body = isBlob
+      ? imageBlobOrData
+      : JSON.stringify({ image: imageBlobOrData, targetIdentity, code });
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to upload avatar');
+    return res.json();
+  }
+
+  async fetchAvatarBlob(code, identity) {
+    const res = await fetch(`${this.apiBase}/avatar/${code}/${identity}`, {
+      headers: this.getAuthHeaders()
+    });
+    if (res.status === 404 || res.status === 403) return null;
+    if (!res.ok) throw new Error('Failed to fetch avatar');
+    return res.blob();
+  }
+
+  async deleteAvatar(identity, code) {
+    const headers = this.getAuthHeaders();
+    let url = `${this.apiBase}/avatar`;
+    if (identity) {
+      url += `/${identity}`;
+      if (code) url += `?code=${code}`;
+    } else if (code) {
+      url += `?code=${code}`;
+    }
+    const res = await fetch(url, { method: 'DELETE', headers });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Failed to delete avatar');
+    return res.json();
+  }
 }

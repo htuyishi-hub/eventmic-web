@@ -29,6 +29,9 @@ export function attachSocketListeners(transport, socketClient, sessionManager) {
   socketClient.on('duck_stage', (d) => transport.emit('duck_stage', d));
   socketClient.on('turn_warning', (d) => transport.emit('turn_warning', d.secondsLeft));
   socketClient.on('metrics_update', (d) => transport.emit('metrics', d.metrics));
+  socketClient.on('avatar_updated', (d) => transport.emit('avatar', d));
+  socketClient.on('avatar_deleted', (d) => transport.emit('avatar', d));
+  socketClient.on('settings_update', (d) => transport.emit('settings', d.settings));
 
   socketClient.on('turn_granted', async (d) => {
     const startMs = Date.now();

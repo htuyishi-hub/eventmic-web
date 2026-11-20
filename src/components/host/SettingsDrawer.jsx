@@ -9,6 +9,7 @@ import { CapabilitiesSection } from './settings/CapabilitiesSection.jsx';
 import { FairModeSection } from '../admin/FairModeSection.jsx';
 import { FloorRulesSection } from './settings/FloorRulesSection.jsx';
 import { ConnectModeSection } from './settings/ConnectModeSection.jsx';
+import { PhotoSettingsSection } from './settings/PhotoSettingsSection.jsx';
 import { useTransport } from '../../context/TransportContext.jsx';
 
 export function SettingsDrawer({
@@ -68,6 +69,8 @@ export function SettingsDrawer({
         <FloorRulesSection />
         <hr className="border-border" />
         <ConnectModeSection />
+        <hr className="border-border" />
+        <PhotoSettingsSection />
         <hr className="border-border" />
         <div className="p-4 bg-background border border-border rounded-xl space-y-1.5 text-xs text-muted">
           <div className="flex items-center gap-1.5 text-white font-bold">

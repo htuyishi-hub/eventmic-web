@@ -1,9 +1,54 @@
 import React from 'react';
-import { AlertTriangle, Zap, Check, X } from 'lucide-react';
+import { AlertTriangle, Zap, X } from 'lucide-react';
 import { useSession } from '../../context/SessionContext.jsx';
 import { ReasonBadge } from '../common/ReasonBadge.jsx';
 import { Button } from '../ui/Button.jsx';
 import { formatWait } from '../../lib/time.js';
+import { Avatar } from '../common/Avatar.jsx';
+import { useResolvedAvatarSrc } from '../../lib/useAvatar.js';
+
+function UrgentItem({ req, onGrant, onDismiss }) {
+  const avatarSrc = useResolvedAvatarSrc(req);
+
+  return (
+    <div className="p-3.5 rounded-xl bg-background border border-rose-500/40 shadow-sm flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <Avatar src={avatarSrc} name={req.name} size="sm" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-bold text-white truncate max-w-[140px]">{req.name}</span>
+            <ReasonBadge reason={req.reason || 'urgent'} />
+          </div>
+          <div className="text-[11px] text-muted font-mono mt-0.5">
+            Requested: {formatWait(req.requestedAt)}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <Button
+          variant="live"
+          size="sm"
+          onClick={() => onGrant(req.id)}
+          className="gap-1 text-xs py-1 px-3 shadow-md shadow-rose-500/20"
+          title="Grant 5-second urgent blip"
+        >
+          <Zap size={13} />
+          <span>Grant (5s)</span>
+        </Button>
+
+        <button
+          type="button"
+          onClick={() => onDismiss(req.id)}
+          className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition-colors"
+          title="Dismiss"
+        >
+          <X size={15} />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function UrgentTab({ onGrantUrgent, onDismissUrgent }) {
   const { urgent = [], grantUrgent, dismissUrgent } = useSession();
@@ -41,42 +86,12 @@ export function UrgentTab({ onGrantUrgent, onDismissUrgent }) {
 
       <div className="space-y-2">
         {urgent.map((req) => (
-          <div
+          <UrgentItem
             key={req.id}
-            className="p-3.5 rounded-xl bg-background border border-rose-500/40 shadow-sm flex items-center justify-between gap-3"
-          >
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-bold text-white truncate max-w-[140px]">{req.name}</span>
-                <ReasonBadge reason={req.reason || 'urgent'} />
-              </div>
-              <div className="text-[11px] text-muted font-mono mt-0.5">
-                Requested: {formatWait(req.requestedAt)}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                variant="live"
-                size="sm"
-                onClick={() => handleGrant(req.id)}
-                className="gap-1 text-xs py-1 px-3 shadow-md shadow-rose-500/20"
-                title="Grant 5-second urgent blip"
-              >
-                <Zap size={13} />
-                <span>Grant (5s)</span>
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => handleDismiss(req.id)}
-                className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition-colors"
-                title="Dismiss"
-              >
-                <X size={15} />
-              </button>
-            </div>
-          </div>
+            req={req}
+            onGrant={handleGrant}
+            onDismiss={handleDismiss}
+          />
         ))}
       </div>
     </div>

@@ -131,5 +131,16 @@ export const en = {
       micDenied: 'Microphone permission was denied. Enable microphone in browser settings to speak.',
       connectionLost: 'Lost connection to venue server. Reconnecting...'
     }
+  },
+  avatar: {
+    title: 'Profile Photo',
+    optionalNotice: 'Add a profile photo (optional).',
+    consent: 'Shown to the organizers and, while you speak, to the room. Deleted when the session ends.',
+    setPhoto: 'Set Photo',
+    removePhoto: 'Remove Photo',
+    takePhoto: 'Take Photo',
+    uploadFile: 'Upload File',
+    skip: 'Skip for now',
+    saveAndContinue: 'Save & Continue'
   }
 };

@@ -3,6 +3,8 @@ import { Mic, X } from 'lucide-react';
 import { formatWait } from '../../lib/time.js';
 import { Button } from '../ui/Button.jsx';
 import { ReasonBadge } from '../admin/ReasonBadge.jsx';
+import { Avatar } from '../common/Avatar.jsx';
+import { useResolvedAvatarSrc } from '../../lib/useAvatar.js';
 
 export function QueueItem({
   item,
@@ -12,6 +14,7 @@ export function QueueItem({
 }) {
   const [waitText, setWaitText] = useState(() => formatWait(item.raisedAt));
   const isFirst = index === 0;
+  const avatarSrc = useResolvedAvatarSrc(item);
 
   useEffect(() => {
     const update = () => setWaitText(formatWait(item.raisedAt));
@@ -36,6 +39,8 @@ export function QueueItem({
         >
           {index + 1}
         </div>
+
+        <Avatar src={avatarSrc} name={item.name} size="sm" />
 
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">

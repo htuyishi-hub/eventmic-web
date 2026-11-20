@@ -34,6 +34,22 @@ function sessionReducer(state, action) {
     case 'SET_MESSAGES': return { ...state, messages: action.payload };
     case 'SET_ANNOUNCEMENT': return { ...state, announcement: action.payload };
     case 'SET_SETTINGS': return { ...state, settings: action.payload };
+    case 'UPDATE_AVATAR': {
+      const { identity, hasAvatar, avatarVersion } = action.payload;
+      const patch = (it) => (it && (it.id === identity || it.attendeeId === identity) ? { ...it, hasAvatar, avatarVersion } : it);
+      return {
+        ...state,
+        floor: state.floor && (state.floor.id === identity || state.floor.holderId === identity)
+          ? { ...state.floor, hasAvatar, avatarVersion }
+          : state.floor,
+        queue: state.queue.map(patch),
+        principals: state.principals.map(patch),
+        attendeeList: state.attendeeList.map(patch),
+        spoken: state.spoken.map(patch),
+        urgent: state.urgent.map(patch),
+        principalQueue: state.principalQueue.map(patch)
+      };
+    }
     case 'RESET': return { ...initialState };
     default: return state;
   }
@@ -63,7 +79,8 @@ export function SessionProvider({ children }) {
       transport.on('urgent', (u) => dispatch({ type: 'SET_URGENT', payload: u })),
       transport.on('messages', (m) => dispatch({ type: 'SET_MESSAGES', payload: m })),
       transport.on('announcement', (a) => dispatch({ type: 'SET_ANNOUNCEMENT', payload: a })),
-      transport.on('settings', (st) => dispatch({ type: 'SET_SETTINGS', payload: st }))
+      transport.on('settings', (st) => dispatch({ type: 'SET_SETTINGS', payload: st })),
+      transport.on('avatar', (a) => dispatch({ type: 'UPDATE_AVATAR', payload: a }))
     ];
     return () => unsubs.forEach(fn => fn());
   }, [transport]);
@@ -85,6 +102,8 @@ export function SessionProvider({ children }) {
   const revokePrincipal = useCallback(async (id) => transport.revokePrincipal(id), [transport]);
   const regeneratePrincipalPin = useCallback(async (id) => transport.regeneratePrincipalPin(id), [transport]);
   const updateSettings = useCallback(async (s) => transport.updateSettings(s), [transport]);
+  const uploadAvatar = useCallback(async (blob, targetId) => transport.uploadAvatar?.(blob, targetId), [transport]);
+  const deleteAvatar = useCallback(async (targetId) => transport.deleteAvatar?.(targetId), [transport]);
   const fetchSessionState = useCallback(async () => transport.fetchSessionState(), [transport]);
   const muteSpeaker = useCallback(async (m) => { dispatch({ type: 'SET_MUTED', payload: m }); return transport.muteSpeaker(m); }, [transport]);
   const sendLevel = useCallback(async (lvl) => transport.sendLevel(lvl), [transport]);
@@ -99,7 +118,7 @@ export function SessionProvider({ children }) {
     ...state, createSession, endSession, connect, disconnect,
     raiseHand, lowerHand, urgentRequest, grant, revoke, takeFloor, requestSpeak,
     allowPrincipal, createPrincipal, getPrincipals, revokePrincipal,
-    regeneratePrincipalPin, updateSettings, fetchSessionState,
+    regeneratePrincipalPin, updateSettings, uploadAvatar, deleteAvatar, fetchSessionState,
     muteSpeaker, sendLevel, sendMessage, broadcastAnnouncement,
     grantUrgent, dismissUrgent, clearError, clearPreempted
   };

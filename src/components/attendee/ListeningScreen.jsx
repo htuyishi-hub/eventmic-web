@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { Hand, Radio, ShieldCheck, Zap } from 'lucide-react';
+import { Hand, Radio, ShieldCheck, Zap, Camera, X } from 'lucide-react';
 import { Button } from '../ui/Button.jsx';
 import { UrgentConfirmSheet } from './UrgentConfirmSheet.jsx';
+import { useSession } from '../../context/SessionContext.jsx';
+import { Avatar } from '../common/Avatar.jsx';
+import { AvatarUploader } from '../common/AvatarUploader.jsx';
+import { useResolvedAvatarSrc } from '../../lib/useAvatar.js';
 
 const REASONS = [
   { id: 'question', label: 'Question' },
@@ -11,16 +15,43 @@ const REASONS = [
 ];
 
 export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }) {
+  const { floor, uploadAvatar, deleteAvatar } = useSession();
   const [selectedReason, setSelectedReason] = useState('question');
   const [isUrgentOpen, setIsUrgentOpen] = useState(false);
+  const [isPhotoOpen, setIsPhotoOpen] = useState(false);
+
+  const photosSetting = session?.settings?.photos || 'speaker_only';
+  const showPhotos = photosSetting !== 'off';
+
+  const currentSpeaker = floor?.holderId ? {
+    id: floor.holderId,
+    name: floor.holderName || floor.name || 'Current Speaker',
+    hasAvatar: floor.hasAvatar,
+    avatarVersion: floor.avatarVersion
+  } : null;
+
+  const speakerAvatarSrc = useResolvedAvatarSrc(currentSpeaker);
 
   return (
     <div className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto bg-background text-foreground">
       {/* Top Status */}
-      <div className="pt-8 text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/15 border border-success/30 text-success text-xs font-bold uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-          <span>You're Connected</span>
+      <div className="pt-6 text-center space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/15 border border-success/30 text-success text-xs font-bold uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <span>Connected</span>
+          </div>
+
+          {showPhotos && (
+            <button
+              type="button"
+              onClick={() => setIsPhotoOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface border border-border text-xs text-muted hover:text-white transition-colors"
+            >
+              <Camera size={13} />
+              <span>Photo</span>
+            </button>
+          )}
         </div>
 
         <div className="space-y-1">
@@ -32,19 +63,35 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
           </p>
         </div>
 
-        {/* Listening Card */}
-        <div className="p-6 bg-surface border border-border rounded-2xl shadow-xl flex flex-col items-center space-y-4 my-6">
-          <div className="w-20 h-20 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
-            <Radio size={36} className="animate-pulse" />
+        {/* Live Speaker or Reinforced Audio Card */}
+        {currentSpeaker && showPhotos ? (
+          <div className="p-6 bg-surface border border-accent/40 rounded-2xl shadow-xl flex flex-col items-center space-y-3 my-4">
+            <Avatar
+              src={speakerAvatarSrc}
+              name={currentSpeaker.name}
+              size="lg"
+              className="ring-4 ring-accent/30"
+            />
+            <div className="space-y-0.5 text-center">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-accent font-bold">
+                {floor.holderRole === 'principal' ? 'Stage Speaker' : 'Attendee on the Floor'}
+              </span>
+              <h3 className="text-base font-bold text-white">{currentSpeaker.name}</h3>
+            </div>
           </div>
-
-          <div className="space-y-1 text-center">
-            <h3 className="text-base font-bold text-white">Stage Audio Reinforced</h3>
-            <p className="text-xs text-muted leading-relaxed">
-              Listen to the live presentation. Choose your reason and tap Raise Hand below to join the queue.
-            </p>
+        ) : (
+          <div className="p-6 bg-surface border border-border rounded-2xl shadow-xl flex flex-col items-center space-y-3 my-4">
+            <div className="w-16 h-16 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
+              <Radio size={32} className="animate-pulse" />
+            </div>
+            <div className="space-y-1 text-center">
+              <h3 className="text-base font-bold text-white">Stage Audio Reinforced</h3>
+              <p className="text-xs text-muted leading-relaxed">
+                Choose your reason and tap Raise Hand below to join the queue.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Bottom Action Area */}
@@ -102,11 +149,42 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
         </div>
       </div>
 
+      {/* Urgent Sheet */}
       <UrgentConfirmSheet
         isOpen={isUrgentOpen}
         onClose={() => setIsUrgentOpen(false)}
         onConfirm={(reason) => onUrgent?.(reason)}
       />
+
+      {/* Photo Modal */}
+      {isPhotoOpen && (
+        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-2xl p-5 max-w-sm w-full space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white">Your Profile Photo</h3>
+              <button
+                type="button"
+                onClick={() => setIsPhotoOpen(false)}
+                className="p-1 rounded-lg text-muted hover:text-white"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <AvatarUploader
+              onSave={async (blob) => {
+                await uploadAvatar(blob);
+                setIsPhotoOpen(false);
+              }}
+              onRemove={async () => {
+                await deleteAvatar();
+                setIsPhotoOpen(false);
+              }}
+              onCancel={() => setIsPhotoOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,45 +1,83 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, RefreshCw, Trash2, Key, Eye, EyeOff } from 'lucide-react';
+import { Shield, Plus, RefreshCw, Trash2, Key, Eye, EyeOff, Camera } from 'lucide-react';
 import { useSession } from '../../context/SessionContext.jsx';
 import { StatusPill } from '../common/StatusPill.jsx';
 import { Button } from '../ui/Button.jsx';
+import { Avatar } from '../common/Avatar.jsx';
+import { AvatarUploader } from '../common/AvatarUploader.jsx';
+import { useResolvedAvatarSrc } from '../../lib/useAvatar.js';
+
+function PrincipalRow({ p, isRevealed, onToggleReveal, onRegenerate, onRevoke, onSetPhoto, onDeletePhoto }) {
+  const avatarSrc = useResolvedAvatarSrc(p);
+  return (
+    <div className="p-3 rounded-xl border border-border bg-background/80 flex items-center justify-between">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <Avatar src={avatarSrc} name={p.name} size="sm" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-white truncate max-w-[130px]">{p.name}</span>
+            <StatusPill status={p.status || 'idle'} size="xs" />
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <Key size={11} className="text-accent" />
+            <span className="font-mono text-xs font-bold text-accent tracking-widest">
+              {isRevealed && p.pin ? p.pin : '••••••'}
+            </span>
+            <button type="button" onClick={onToggleReveal} className="p-0.5 text-muted hover:text-white" title={isRevealed ? 'Hide PIN' : 'Reveal PIN'}>
+              {isRevealed ? <EyeOff size={12} /> : <Eye size={12} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1">
+        <button type="button" onClick={onSetPhoto} title="Set speaker photo" aria-label={`Set photo for ${p.name}`} className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition-colors">
+          <Camera size={14} />
+        </button>
+        {p.hasAvatar && (
+          <button type="button" onClick={onDeletePhoto} title="Remove speaker photo" aria-label={`Remove photo for ${p.name}`} className="p-1.5 rounded-lg text-muted hover:text-red-400 hover:bg-surface transition-colors">
+            <Trash2 size={14} />
+          </button>
+        )}
+        <button type="button" onClick={onRegenerate} title="Regenerate 6-digit PIN" className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition-colors">
+          <RefreshCw size={14} />
+        </button>
+        <button type="button" onClick={onRevoke} title="Revoke Speaker" className="p-1.5 rounded-lg text-muted hover:text-live hover:bg-live/10 transition-colors">
+          <Trash2 size={14} className="text-live/70 hover:text-live" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function PrincipalsTab() {
-  const { principals = [], createPrincipal, getPrincipals, revokePrincipal, regeneratePrincipalPin } = useSession();
+  const { principals = [], createPrincipal, getPrincipals, revokePrincipal, regeneratePrincipalPin, uploadAvatar, deleteAvatar } = useSession();
   const [localPrincipals, setLocalPrincipals] = useState(principals || []);
   const [revealedPins, setRevealedPins] = useState({});
   const [newName, setNewName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [photoTarget, setPhotoTarget] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (principals && principals.length > 0) {
-      setLocalPrincipals(principals);
-      return;
-    }
+    if (principals && principals.length > 0) { setLocalPrincipals(principals); return; }
     let mounted = true;
-    getPrincipals().then(list => {
-      if (mounted && Array.isArray(list)) setLocalPrincipals(list);
-    }).catch(() => {});
+    getPrincipals().then(list => { if (mounted && Array.isArray(list)) setLocalPrincipals(list); }).catch(() => {});
     return () => { mounted = false; };
   }, [getPrincipals, principals]);
 
   const handleAddPrincipal = async (e) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const created = await createPrincipal(newName.trim());
       setLocalPrincipals(prev => [...prev, created]);
-      setNewName('');
-      setIsAdding(false);
+      setNewName(''); setIsAdding(false);
     } catch (err) {
       setError(err.message || 'Failed to add speaker');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleRegenerate = async (id) => {
@@ -47,9 +85,7 @@ export function PrincipalsTab() {
       const newPin = await regeneratePrincipalPin(id);
       setLocalPrincipals(prev => prev.map(p => p.id === id ? { ...p, pin: newPin } : p));
       setRevealedPins(prev => ({ ...prev, [id]: true }));
-    } catch (err) {
-      setError(err.message || 'Failed to regenerate PIN');
-    }
+    } catch (err) { setError(err.message || 'Failed to regenerate PIN'); }
   };
 
   const handleRevoke = async (id) => {
@@ -57,9 +93,7 @@ export function PrincipalsTab() {
     try {
       await revokePrincipal(id);
       setLocalPrincipals(prev => prev.filter(p => p.id !== id));
-    } catch (err) {
-      setError(err.message || 'Failed to revoke speaker');
-    }
+    } catch (err) { setError(err.message || 'Failed to revoke speaker'); }
   };
 
   return (
@@ -84,18 +118,27 @@ export function PrincipalsTab() {
           <label className="block text-xs font-semibold text-white">Speaker Display Name</label>
           <div className="flex items-center gap-2">
             <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="e.g. Dr. Jane Smith"
-              required
-              autoFocus
+              type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
+              placeholder="e.g. Dr. Jane Smith" required autoFocus
               className="flex-1 bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-white"
             />
             <Button size="sm" variant="primary" type="submit" disabled={loading} className="text-xs py-1.5 px-3">Create</Button>
             <Button size="sm" variant="ghost" type="button" onClick={() => setIsAdding(false)} className="text-xs py-1.5 px-2">Cancel</Button>
           </div>
         </form>
+      )}
+
+      {photoTarget && (
+        <div className="p-3 rounded-xl bg-background border border-accent/40 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-white">Set Photo for {photoTarget.name}</span>
+            <Button size="xs" variant="ghost" onClick={() => setPhotoTarget(null)}>Close</Button>
+          </div>
+          <AvatarUploader
+            onSave={async (blob) => { await uploadAvatar(blob, photoTarget.id); setPhotoTarget(null); }}
+            onCancel={() => setPhotoTarget(null)}
+          />
+        </div>
       )}
 
       {localPrincipals.length === 0 ? (
@@ -105,52 +148,14 @@ export function PrincipalsTab() {
         </div>
       ) : (
         <div className="space-y-2">
-          {localPrincipals.map((p) => {
-            const isRevealed = Boolean(revealedPins[p.id]);
-            return (
-              <div key={p.id} className="p-3 rounded-xl border border-border bg-background/80 flex items-center justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white truncate max-w-[130px]">{p.name}</span>
-                    <StatusPill status={p.status || 'idle'} size="xs" />
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Key size={11} className="text-accent" />
-                    <span className="font-mono text-xs font-bold text-accent tracking-widest">
-                      {isRevealed && p.pin ? p.pin : '••••••'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setRevealedPins(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
-                      className="p-0.5 text-muted hover:text-white"
-                      title={isRevealed ? 'Hide PIN' : 'Reveal PIN'}
-                    >
-                      {isRevealed ? <EyeOff size={12} /> : <Eye size={12} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleRegenerate(p.id)}
-                    title="Regenerate 6-digit PIN"
-                    className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition-colors"
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRevoke(p.id)}
-                    title="Revoke Speaker"
-                    className="p-1.5 rounded-lg text-muted hover:text-live hover:bg-live/10 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {localPrincipals.map((p) => (
+            <PrincipalRow
+              key={p.id} p={p} isRevealed={Boolean(revealedPins[p.id])}
+              onToggleReveal={() => setRevealedPins(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
+              onRegenerate={() => handleRegenerate(p.id)} onRevoke={() => handleRevoke(p.id)}
+              onSetPhoto={() => setPhotoTarget(p)} onDeletePhoto={() => deleteAvatar?.(p.id)}
+            />
+          ))}
         </div>
       )}
     </div>
