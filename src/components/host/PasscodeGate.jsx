@@ -207,6 +207,7 @@ export function PasscodeGate({ onUnlocked }) {
                     value={name}
                     onChange={(e) => { setName(e.target.value); setError(''); }}
                     placeholder="e.g. Honore Tuyishi"
+                    autoComplete="name"
                     required
                     className="w-full min-h-[44px] px-4 bg-background border border-border rounded-xl text-white text-sm placeholder-muted focus:border-accent focus:outline-none"
                   />
@@ -222,6 +223,7 @@ export function PasscodeGate({ onUnlocked }) {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   placeholder="you@example.com"
+                  autoComplete="email"
                   required
                   className="w-full min-h-[44px] px-4 bg-background border border-border rounded-xl text-white text-sm placeholder-muted focus:border-accent focus:outline-none"
                 />
@@ -249,6 +251,7 @@ export function PasscodeGate({ onUnlocked }) {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     placeholder="At least 6 characters"
+                    autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                     required
                     minLength={6}
                     className="w-full min-h-[44px] pl-4 pr-11 bg-background border border-border rounded-xl text-white text-sm font-mono placeholder-muted focus:border-accent focus:outline-none"
