@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Send, Mic, Square } from 'lucide-react';
 import { useSession } from '../../context/SessionContext.jsx';
+import { useTransport } from '../../context/TransportContext.jsx';
 import { Button } from '../ui/Button.jsx';
 
 export function MessagesPanel() {
   const { messages = [], sendMessage } = useSession();
+  const { transport } = useTransport();
   const [inputText, setInputText] = useState('');
   const [recording, setRecording] = useState(false);
   const [recSeconds, setRecSeconds] = useState(0);
@@ -59,7 +61,13 @@ export function MessagesPanel() {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let stream = null;
+      const existing = transport?.preWarmedStream;
+      if (existing && existing.getAudioTracks?.().some((t) => t.readyState === 'live')) {
+        stream = new MediaStream(existing.getAudioTracks().map((t) => t.clone()));
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
       streamRef.current = stream;
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
@@ -109,7 +117,13 @@ export function MessagesPanel() {
       recorder.start();
     } catch (err) {
       setRecording(false);
-      setError(err?.message || 'Microphone permission denied');
+      if (err?.name === 'NotAllowedError' || /denied|permission/i.test(err?.message || '')) {
+        setError('Microphone blocked. Click the lock/settings icon in your browser address bar, allow Microphone, and try again.');
+      } else if (err?.name === 'NotFoundError') {
+        setError('No microphone detected on this device.');
+      } else {
+        setError(err?.message || 'Could not access microphone');
+      }
     }
   };
 
