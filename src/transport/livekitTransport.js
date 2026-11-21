@@ -206,6 +206,13 @@ export class LiveKitTransport {
     return pin;
   }
   async updateSettings(settings) { return this.api.updateSettings(this.code, settings); }
+  async sendMessage(text, to = 'all', voice = null) {
+    this.socketClient.send('chat_message', {
+      text: text || '',
+      to,
+      ...(voice?.audioDataUrl ? { audioDataUrl: voice.audioDataUrl, durationMs: voice.durationMs || 0 } : {})
+    });
+  }
   async uploadAvatar(blob, targetId) {
     const res = await this.api.uploadAvatar(blob, targetId, this.code);
     this.emit('avatar', { identity: res.identity || targetId || this.myId, hasAvatar: true, avatarVersion: res.version });

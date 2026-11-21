@@ -11,6 +11,7 @@ export function attachSocketListeners(transport, socketClient, sessionManager) {
     if (d.floor !== undefined) transport.emit('floor', d.floor);
     if (d.attendeeCount !== undefined) transport.emit('attendees', { count: d.attendeeCount });
     if (d.metrics) transport.emit('metrics', d.metrics);
+    if (Array.isArray(d.messages)) transport.emit('messages', d.messages);
   });
 
   socketClient.on('queue_update', (d) => {
@@ -32,6 +33,7 @@ export function attachSocketListeners(transport, socketClient, sessionManager) {
   socketClient.on('avatar_updated', (d) => transport.emit('avatar', d));
   socketClient.on('avatar_deleted', (d) => transport.emit('avatar', d));
   socketClient.on('settings_update', (d) => transport.emit('settings', d.settings));
+  socketClient.on('messages', (d) => transport.emit('messages', d.messages || []));
 
   socketClient.on('turn_granted', async (d) => {
     const startMs = Date.now();

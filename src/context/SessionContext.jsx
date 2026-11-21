@@ -107,7 +107,7 @@ export function SessionProvider({ children }) {
   const fetchSessionState = useCallback(async () => transport.fetchSessionState(), [transport]);
   const muteSpeaker = useCallback(async (m) => { dispatch({ type: 'SET_MUTED', payload: m }); return transport.muteSpeaker(m); }, [transport]);
   const sendLevel = useCallback(async (lvl) => transport.sendLevel(lvl), [transport]);
-  const sendMessage = useCallback(async (text, role) => transport.sendMessage?.(text, role), [transport]);
+  const sendMessage = useCallback(async (text, role, voice) => transport.sendMessage?.(text, role, voice), [transport]);
   const broadcastAnnouncement = useCallback(async (text, type, duration) => transport.broadcastAnnouncement?.(text, type, duration), [transport]);
   const grantUrgent = useCallback(async (id) => transport.grantUrgent?.(id), [transport]);
   const dismissUrgent = useCallback(async (id) => transport.dismissUrgent?.(id), [transport]);
