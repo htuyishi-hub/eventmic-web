@@ -148,7 +148,6 @@ export class LiveKitTransport {
 
   async urgentRequest() { this.socketClient.send('urgent_request', {}); }
   async takeFloor() {
-    await this.api.postFloorAction('take', { code: this.code });
     this.socketClient.send('take_floor', {});
   }
 

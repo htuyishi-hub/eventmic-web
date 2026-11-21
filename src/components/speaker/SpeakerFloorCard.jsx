@@ -49,7 +49,7 @@ export function SpeakerFloorCard({
               ) : (
                 <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-background border border-border text-muted text-xs font-black uppercase tracking-wider">
                   <MicOff size={14} />
-                  YOU ARE MUTED
+                  STANDBY (MIC OFF)
                 </span>
               )}
             </div>

@@ -70,7 +70,9 @@ export function SpeakerDashboard({ onExit, overrideState }) {
   const [questionsOpen, setQuestionsOpen] = useState(overrideState?.questionsOpen ?? true);
 
   const myId = sc.transport?.myId || 'pr-1';
-  const isOnFloor = overrideState?.isOnFloor ?? ((floor && floor.id === myId) || sc.selfState === 'on_air');
+  const floorHolderId = floor?.holderId || floor?.id;
+  const floorHolderRole = floor?.holderRole || floor?.role;
+  const isOnFloor = overrideState?.isOnFloor ?? ((floor && floorHolderId === myId) || sc.selfState === 'on_air');
   const isNextUp = overrideState?.isNextUp ?? (sc.principalQueue?.some(p => p.id === myId && p.status === 'on_deck'));
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
       try { navigator.vibrate?.([100, 50, 100]); } catch {}
     }
   }, [isNextUp, overrideState]);
-  const anotherPrincipalOnFloor = floor && floor.role === 'principal' && floor.id !== myId;
+  const anotherPrincipalOnFloor = floor && floorHolderRole === 'principal' && floorHolderId !== myId;
   const isRequested = sc.principalQueue?.some(p => p.id === myId);
   const pendingHandovers = overrideState?.pendingHandovers || (sc.principalQueue || []).filter(p => p.id !== myId && !laterDismissed[p.id]);
 
@@ -144,7 +146,7 @@ export function SpeakerDashboard({ onExit, overrideState }) {
         anotherPrincipalOnFloor={anotherPrincipalOnFloor} isRequested={isRequested}
         pendingHandovers={pendingHandovers}
         onTakeFloor={async () => { try { await sc.takeFloor?.(); } catch (e) { setActionError(e.message); } }}
-        onReleaseFloor={() => sc.revoke?.()}
+        onReleaseFloor={() => sc.revoke?.(myId)}
         onRequestSpeak={async () => { try { await sc.requestSpeak?.(); } catch (e) { setActionError(e.message); } }}
         onAllowHandover={(id) => sc.allowPrincipal?.(id)}
         onDismissHandover={(id) => setLaterDismissed(prev => ({ ...prev, [id]: true }))}
