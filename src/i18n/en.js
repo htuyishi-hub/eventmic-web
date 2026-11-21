@@ -152,5 +152,15 @@ export const en = {
     uploadFile: 'Upload File',
     skip: 'Skip for now',
     saveAndContinue: 'Save & Continue'
+  },
+  outputs: {
+    title: 'Outputs',
+    addOutput: 'Add Output',
+    muteAll: 'Mute all outputs',
+    meterNote: 'Meters show the signal sent to each output, not the sound in the room.',
+    delayNote: 'Delay is only needed for mixed device types such as Bluetooth plus wired.',
+    missingBanner: 'An audio output is missing or disconnected.',
+    exportPreset: 'Export preset',
+    importPreset: 'Import preset'
   }
 };
