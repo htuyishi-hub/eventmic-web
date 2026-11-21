@@ -15,6 +15,9 @@ export function useHostAudio(transport, floor, isMuted, showToast) {
   const [isContextSuspended, setIsContextSuspended] = useState(false);
   const [liveLevels, setLiveLevels] = useState({ in: 0, out: 0, clipping: false, limiterActive: false, sources: {} });
   const [isClipping, setIsClipping] = useState(false);
+  const [outputs, setOutputs] = useState(() => engine.getOutputs());
+  const [missingOutputWarning, setMissingOutputWarning] = useState('');
+  const [missingOutputBehaviour, setMissingBehaviourState] = useState(() => engine.getMissingOutputBehaviour());
   const clipTimerRef = useRef(null);
 
   useEffect(() => { engine.setMuted(isMuted); }, [engine, isMuted]);
@@ -62,8 +65,10 @@ export function useHostAudio(transport, floor, isMuted, showToast) {
     });
     const unsubState = engine.on('stateChange', (st) => setIsContextSuspended(st === 'suspended'));
     const unsubDev = engine.on('devicechange', async () => setAudioDevices(await enumerateOutputDevices()));
+    const unsubOuts = engine.on('outputs_change', (list) => setOutputs(list));
+    const unsubMiss = engine.on('output_missing', (out) => setMissingOutputWarning(`Output "${out.name}" disconnected.`));
 
-    return () => { mounted = false; unsubUnplugged(); unsubState(); unsubDev(); };
+    return () => { mounted = false; unsubUnplugged(); unsubState(); unsubDev(); unsubOuts(); unsubMiss(); };
   }, [engine, showToast]);
 
   useEffect(() => {
@@ -127,6 +132,19 @@ export function useHostAudio(transport, floor, isMuted, showToast) {
     liveLevels,
     isClipping,
     isContextSuspended,
-    resumeAudio
+    resumeAudio,
+    outputs,
+    outputLevels: liveLevels.outputs || {},
+    missingOutputWarning,
+    dismissMissingOutputWarning: () => setMissingOutputWarning(''),
+    missingOutputBehaviour,
+    setMissingOutputBehaviour: (b) => { setMissingBehaviourState(b); engine.setMissingOutputBehaviour(b); },
+    addOutput: (cfg) => engine.addOutput(cfg),
+    removeOutput: (id) => engine.removeOutput(id),
+    updateOutput: (id, patch) => engine.updateOutput(id, patch),
+    muteAllOutputs: () => engine.muteAllOutputs(),
+    playOutputTestTone: (id, targetDb, capDb) => engine.playOutputTestTone(id, targetDb, capDb),
+    exportOutputsPreset: () => engine.exportOutputsPreset(),
+    importOutputsPreset: (json) => engine.importOutputsPreset(json)
   };
 }

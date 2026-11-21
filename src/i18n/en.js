@@ -125,7 +125,17 @@ export const en = {
     },
     turnEnded: 'Your speaking turn has ended.',
     sessionEnded: 'This event session has ended. Thank you for attending!',
-    errors: {
+    outputs: {
+    title: 'Outputs',
+    addOutput: 'Add Output',
+    muteAll: 'Mute all outputs',
+    meterNote: 'Meters show the signal sent to each output, not the sound in the room.',
+    delayNote: 'Delay is only needed for mixed device types such as Bluetooth plus wired.',
+    missingBanner: 'An audio output is missing or disconnected.',
+    exportPreset: 'Export preset',
+    importPreset: 'Import preset'
+  },
+  errors: {
       invalidCode: 'Session code not found',
       full: 'Session is full',
       micDenied: 'Microphone permission was denied. Enable microphone in browser settings to speak.',

@@ -8,6 +8,7 @@ import { enumerateOutputDevices, saveActiveDevice, isDeviceUnplugged, listenDevi
 import { play1kHzTone } from './audioTone.js';
 import { buildAudioGraph, computeRmsLevel } from './audioGraph.js';
 import { SourceChainManager } from './sourceChains.js';
+import { MultiOutputManager } from './multiOutputManager.js';
 
 export class HostAudioEngine {
   constructor() {
@@ -26,9 +27,15 @@ export class HostAudioEngine {
     this.activeDeviceId = '';
     this.activeDeviceLabel = 'Default Audio Output';
     this.listeners = new Map();
+    this.multiOutputBusDest = null;
+    this.multiOutput = new MultiOutputManager({
+      onChange: (outs) => this.emit('outputs_change', outs),
+      onMissing: (out) => this.emit('output_missing', out)
+    });
     this._handleDeviceChange = async () => {
       this.emit('devicechange');
       const devs = await enumerateOutputDevices();
+      await this.multiOutput.onDeviceChange(devs);
       if (isDeviceUnplugged(this.activeDeviceId, devs)) {
         const missing = this.activeDeviceLabel;
         await this.setOutputDevice('');
@@ -57,6 +64,11 @@ export class HostAudioEngine {
       volume: this.volume, isMuted: this.isMuted, routing: this.routingConfig
     });
     this.sourceManager = new SourceChainManager(this.ctx, this.g.volumeGain);
+    if (typeof this.ctx.createMediaStreamDestination === 'function') {
+      this.multiOutputBusDest = this.ctx.createMediaStreamDestination();
+      this.g.muteGain.connect(this.multiOutputBusDest);
+      this.multiOutput.attachBusStream(this.multiOutputBusDest.stream);
+    }
     return this.ctx;
   }
 
@@ -158,7 +170,8 @@ export class HostAudioEngine {
       out: Number(outLvl.toFixed(3)),
       clipping: outLvl >= 0.89,
       limiterActive: typeof reduction === 'number' && reduction < -0.5,
-      sources: this.sourceManager ? this.sourceManager.getLevels() : {}
+      sources: this.sourceManager ? this.sourceManager.getLevels() : {},
+      outputs: this.multiOutput.getOutputLevels()
     };
   }
 
@@ -177,15 +190,28 @@ export class HostAudioEngine {
   }
 
   async resume() {
+    await this.multiOutput.resumeAll();
     if (this.ctx && this.ctx.state === 'suspended') {
       await this.ctx.resume();
       this.emit('stateChange', this.ctx.state);
     }
   }
 
+  getOutputs() { return this.multiOutput.getOutputs(); }
+  addOutput(cfg) { if (this.ctx) this.ensureContext(); return this.multiOutput.addOutput(cfg); }
+  removeOutput(id) { return this.multiOutput.removeOutput(id); }
+  updateOutput(id, patch) { return this.multiOutput.updateOutput(id, patch); }
+  muteAllOutputs() { return this.multiOutput.muteAllOutputs(); }
+  playOutputTestTone(id, targetDb, capDb) { return this.multiOutput.playTestTone(id, targetDb, capDb); }
+  exportOutputsPreset() { return this.multiOutput.exportPresetJson(); }
+  importOutputsPreset(json) { return this.multiOutput.importPresetJson(json); }
+  setMissingOutputBehaviour(b) { return this.multiOutput.setMissingBehaviour(b); }
+  getMissingOutputBehaviour() { return this.multiOutput.missingBehaviour; }
+
   dispose() {
     this._unsubDeviceChange?.();
     this.attachStream(null);
+    this.multiOutput.dispose();
     this.sourceManager?.dispose();
     this.chromeWorkaroundAudio?.remove();
     this.g?.outputAudioEl?.remove();

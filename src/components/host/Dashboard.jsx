@@ -13,6 +13,7 @@ import { EndSessionConfirm } from './EndSessionConfirm.jsx';
 import { SettingsDrawer } from './SettingsDrawer.jsx';
 import { SessionMetricsBar } from '../admin/SessionMetricsBar.jsx';
 import { SourceMetersCard } from '../admin/SourceMetersCard.jsx';
+import { OutputsPanel } from '../admin/OutputsPanel.jsx';
 import { AnnouncementBox } from '../admin/AnnouncementBox.jsx';
 import { UrgentBanner } from '../admin/UrgentBanner.jsx';
 import { MessagesPanel } from '../admin/MessagesPanel.jsx';
@@ -44,7 +45,8 @@ export function Dashboard({ onSessionEndedWithStats }) {
     audioEngine, audioDevices, activeDeviceId, activeDeviceLabel,
     unpluggedWarning, dismissUnpluggedWarning, selectOutputDevice,
     refreshDevices, attachMicStream, muteSource, volume, setVolume,
-    liveLevels, isClipping, isContextSuspended, resumeAudio
+    liveLevels, isClipping, isContextSuspended, resumeAudio,
+    outputs, outputLevels, updateOutput, muteAllOutputs
   } = useHostAudio(transport, floor, isMuted, setToastMessage);
 
   const { getFinalStats } = useSessionStats(session, floor, queue);
@@ -113,6 +115,13 @@ export function Dashboard({ onSessionEndedWithStats }) {
             principalQueue={principalQueue} onHandoverNext={(id) => allowPrincipal(id)}
           />
           <SourceMetersCard liveLevels={liveLevels} onMuteSource={muteSource} />
+          <OutputsPanel
+            outputs={outputs}
+            outputLevels={outputLevels}
+            onUpdateOutput={updateOutput}
+            onMuteAll={muteAllOutputs}
+            onResumeOutputs={resumeAudio}
+          />
           <div className="flex-1 min-h-[300px]">
             <AdminTabs queue={queue} onGrant={grant} onDrop={revoke} onOpenQr={() => setIsQrOpen(true)} />
           </div>

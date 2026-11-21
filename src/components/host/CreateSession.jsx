@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, RefreshCw, Trash2, Calendar, LogOut } from 'lucide-react';
 import { DMLogo } from '../brand/DMLogo.jsx';
+import { SetupOutputsSection } from '../admin/SetupOutputsSection.jsx';
 import { Button } from '../ui/Button.jsx';
 
 const HOST_STORAGE_KEY = 'eventmic_host_session';
@@ -191,6 +192,8 @@ export function CreateSession({ onStartSession, onResumeSession }) {
               </label>
             </div>
           </div>
+
+          <SetupOutputsSection />
 
           <Button
             type="submit"
