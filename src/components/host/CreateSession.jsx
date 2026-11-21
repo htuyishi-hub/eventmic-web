@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, RefreshCw, Trash2, Calendar, LogOut } from 'lucide-react';
 import { DMLogo } from '../brand/DMLogo.jsx';
@@ -27,6 +27,7 @@ export function CreateSession({ onStartSession, onResumeSession }) {
   const [loading, setLoading] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [resumeTick, setResumeTick] = useState(0);
+  const [expiredNotice, setExpiredNotice] = useState('');
 
   // Check if a saved live session exists
   let savedSession = null;
@@ -41,6 +42,25 @@ export function CreateSession({ onStartSession, onResumeSession }) {
       }
     }
   } catch {}
+
+  useEffect(() => {
+    if (!savedSession?.code) return undefined;
+    let cancelled = false;
+    const raw = import.meta.env?.VITE_API_BASE || '/api';
+    const base = String(raw).trim().replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api';
+    fetch(`${base}/sessions/${savedSession.code}`)
+      .then(async (res) => {
+        if (cancelled) return;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.status === 'ended') {
+          try { localStorage.removeItem(HOST_STORAGE_KEY); } catch {}
+          setResumeTick((n) => n + 1);
+          setExpiredNotice('Previous session ended on server. Create a new session below on your account.');
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [savedSession?.code]);
 
   const handleStartNew = async (e) => {
     e.preventDefault();
@@ -89,6 +109,12 @@ export function CreateSession({ onStartSession, onResumeSession }) {
         <p className="text-sm text-center text-muted mb-8">
           Launch a live Q&amp;A microphone room for your audience.
         </p>
+
+        {expiredNotice && (
+          <div role="status" className="mb-6 p-4 rounded-xl bg-amber-950/50 border border-amber-700 text-xs font-semibold text-amber-200">
+            {expiredNotice}
+          </div>
+        )}
 
         {savedSession && (
           <div className="mb-8 p-5 bg-background border border-accent/40 rounded-xl">
