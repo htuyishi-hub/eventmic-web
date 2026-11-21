@@ -20,6 +20,10 @@ export function SpeakerJoinScreen({ onLogin, onJoin, initialCode = '' }) {
       setError('Session code must be 6 characters');
       return;
     }
+    if (name.trim().length < 2) {
+      setError('Please enter your name');
+      return;
+    }
     if (!/^\d{6}$/.test(cleanPin)) {
       setError('Speaker PIN must be exactly 6 digits');
       return;
@@ -107,14 +111,15 @@ export function SpeakerJoinScreen({ onLogin, onJoin, initialCode = '' }) {
 
           <div>
             <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">
-              Your Name (Optional)
+              Your Name
             </label>
             <input
               type="text"
               value={name}
               disabled={loading}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Sarah Connor"
+              placeholder="e.g. Honore Tuyishi"
+              required
               className="w-full px-3 py-2 bg-background border border-border rounded-xl text-white text-xs disabled:opacity-50"
             />
           </div>

@@ -120,8 +120,10 @@ export class LiveKitTransport {
     this.socketClient.connect(this.apiToken);
     if (this.role === 'admin') await this.sessionManager.connectRoom(url, token, 'admin');
 
+    this.emit('session', { code: this.code, name: this.sessionName || this.code, status: 'live', createdAt: Date.now() });
     this.setConnectionState('connected');
     this.setSelfState('listening');
+    return { identity: this.myId, name: this.myName || name || '', code: this.code };
   }
 
   async raiseHand(options = {}) {
