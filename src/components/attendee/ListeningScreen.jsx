@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Hand, ShieldCheck, Zap, Camera, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Hand, ShieldCheck, Zap, Camera, X, QrCode } from 'lucide-react';
 import { DMRecordingWave, DMLogo } from '../brand/DMLogo.jsx';
 import { Button } from '../ui/Button.jsx';
 import { UrgentConfirmSheet } from './UrgentConfirmSheet.jsx';
@@ -44,16 +45,28 @@ export function ListeningScreen({ session, attendeeName, onRaiseHand, onUrgent }
             <span>Live</span>
           </div>
 
-          {showPhotos && (
-            <button
-              type="button"
-              onClick={() => setIsPhotoOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-full bg-surface border border-border text-xs text-muted hover:text-white transition-colors"
-            >
-              <Camera size={13} />
-              <span>Photo</span>
-            </button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {session?.code && (
+              <Link
+                to={`/join/${session.code}/share`}
+                aria-label="Share Room QR"
+                className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-full bg-surface border border-border text-xs text-muted hover:text-white transition-colors"
+              >
+                <QrCode size={13} />
+                <span>Share</span>
+              </Link>
+            )}
+            {showPhotos && (
+              <button
+                type="button"
+                onClick={() => setIsPhotoOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-full bg-surface border border-border text-xs text-muted hover:text-white transition-colors"
+              >
+                <Camera size={13} />
+                <span>Photo</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-1">

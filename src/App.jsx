@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage.jsx';
 import { AdminPage } from './pages/AdminPage.jsx';
 import { SpeakerPage } from './pages/SpeakerPage.jsx';
 import { JoinPage } from './pages/JoinPage.jsx';
+import { ShareRoomPage } from './pages/ShareRoomPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
 import { SoundCheckPage } from './pages/SoundCheckPage.jsx';
 import { DMBootSplash } from './components/brand/DMBootSplash.jsx';
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/speaker" element={<SpeakerPage />} />
             <Route path="/check" element={<SoundCheckPage />} />
             <Route path="/join/:code" element={<JoinPage />} />
+            <Route path="/join/:code/share" element={<ShareRoomPage />} />
             {import.meta.env.DEV && DevGalleryPage && (
               <Route
                 path="/dev/gallery"
