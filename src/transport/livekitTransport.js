@@ -117,11 +117,15 @@ export class LiveKitTransport {
     }
     if (identity) this.myId = identity;
 
-    this.socketClient.connect(this.apiToken);
-    if (this.role === 'admin') await this.sessionManager.connectRoom(url, token, 'admin');
-
     this.emit('session', { code: this.code, name: this.sessionName || this.code, status: 'live', createdAt: Date.now() });
-    this.setConnectionState('connected');
+    this.socketClient.connect(this.apiToken);
+    if (this.role === 'admin') {
+      this.sessionManager.connectRoom(url, token, 'admin')
+        .then(() => this.setConnectionState('connected'))
+        .catch(() => this.setConnectionState('disconnected'));
+    } else {
+      this.setConnectionState('connected');
+    }
     this.setSelfState('listening');
     return { identity: this.myId, name: this.myName || name || '', code: this.code };
   }

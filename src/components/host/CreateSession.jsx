@@ -25,6 +25,8 @@ export function CreateSession({ onStartSession, onResumeSession }) {
   };
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resuming, setResuming] = useState(false);
+  const [resumeTick, setResumeTick] = useState(0);
 
   // Check if a saved live session exists
   let savedSession = null;
@@ -105,8 +107,26 @@ export function CreateSession({ onStartSession, onResumeSession }) {
               <Button
                 variant="primary"
                 size="md"
+                loading={resuming}
                 className="flex-1 gap-2"
-                onClick={() => onResumeSession(savedSession)}
+                onClick={async () => {
+                  setResuming(true);
+                  setError('');
+                  try {
+                    await onResumeSession(savedSession);
+                  } catch (err) {
+                    const msg = err?.message || 'Could not resume session';
+                    if (/not found|ended/i.test(msg)) {
+                      try { localStorage.removeItem(HOST_STORAGE_KEY); } catch {}
+                      setResumeTick((n) => n + 1);
+                      setError('Previous session expired on server. Start a new one below.');
+                    } else {
+                      setError(msg);
+                    }
+                  } finally {
+                    setResuming(false);
+                  }
+                }}
               >
                 <RefreshCw size={16} />
                 <span>Resume Session</span>
