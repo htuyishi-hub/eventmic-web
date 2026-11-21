@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { TransportProvider } from './context/TransportContext.jsx';
 import { SessionProvider } from './context/SessionContext.jsx';
@@ -15,6 +15,12 @@ const DevGalleryPage = import.meta.env.DEV
   : null;
 
 export default function App() {
+  useEffect(() => {
+    const raw = import.meta.env?.VITE_API_BASE || '/api';
+    const base = String(raw).trim().replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api';
+    fetch(`${base}/health`).catch(() => {});
+  }, []);
+
   return (
     <TransportProvider>
       <SessionProvider>
